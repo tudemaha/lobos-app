@@ -37,7 +37,7 @@ public class CollectionRepository {
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, new String[] { "id" });
+            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
             ps.setString(1, collection.getName());
             ps.setString(2, collection.getColor());
             ps.setString(3, collection.getUserId());
