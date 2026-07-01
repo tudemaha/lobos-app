@@ -8,10 +8,8 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Repository
@@ -47,7 +45,8 @@ public class CollectionRepository {
     }
 
     public List<Collection> findAllByUserId(String userId) {
-        String sql = "SELECT * FROM collections WHERE user_id = ?";
+        String sql = "SELECT * FROM collections WHERE user_id = ?" +
+                " ORDER BY created_at DESC";
         return jdbcTemplate.query(sql, collectionRowMapper, userId);
     }
 
