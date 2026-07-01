@@ -2,9 +2,11 @@ package id.my.tudemaha.lobos.service;
 
 import id.my.tudemaha.lobos.dto.request.UserLogin;
 import id.my.tudemaha.lobos.dto.request.UserRegister;
+import id.my.tudemaha.lobos.dto.request.UserUpdate;
 import id.my.tudemaha.lobos.dto.response.AccessToken;
 import id.my.tudemaha.lobos.exception.DuplicateEmailException;
 import id.my.tudemaha.lobos.exception.LoginException;
+import id.my.tudemaha.lobos.exception.UserNotFoundException;
 import id.my.tudemaha.lobos.mapper.UserMapper;
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.repository.UserRepository;
@@ -25,6 +27,10 @@ public class UserService {
     }
 
     public void register(UserRegister userRegister) {
+        if(!userRegister.getPassword().equals(userRegister.getConfirmPassword())) {
+            throw new IllegalArgumentException("password and confirmPassword do not match");
+        }
+
         User newUser = UserMapper.toEntity(userRegister);
 
         Optional<User> user = userRepository.findByEmail(newUser.getEmail());
@@ -50,5 +56,17 @@ public class UserService {
         AccessToken accessToken = new AccessToken();
         accessToken.setToken(token);
         return accessToken;
+    }
+
+    public void update(UserUpdate userUpdate, String id) {
+        Optional<User> userOpt = userRepository.findById(id);
+        if (userOpt.isEmpty()) {
+            throw new UserNotFoundException();
+        }
+
+        User user = userOpt.get();
+        user.setFirstName(userUpdate.getFirstName());
+        user.setLastName(userUpdate.getLastName());
+        userRepository.update(user);
     }
 }

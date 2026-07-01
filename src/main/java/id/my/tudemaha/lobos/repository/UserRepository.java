@@ -64,12 +64,10 @@ public class UserRepository {
     }
 
     public void update(User user) {
-        String sql = "UPDATE users SET first_name = ?, last_name = ?, email = ?, password = ? WHERE id = ?";
+        String sql = "UPDATE users SET first_name = ?, last_name = ? WHERE id = ?";
         jdbcTemplate.update(sql,
                 user.getFirstName(),
                 user.getLastName(),
-                user.getEmail(),
-                user.getPassword(),
                 user.getId()
         );
     }

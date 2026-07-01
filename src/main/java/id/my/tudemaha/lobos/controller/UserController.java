@@ -1,16 +1,16 @@
 package id.my.tudemaha.lobos.controller;
 
+import id.my.tudemaha.lobos.dto.request.UserUpdate;
 import id.my.tudemaha.lobos.dto.response.AccessToken;
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
 import id.my.tudemaha.lobos.dto.request.UserLogin;
 import id.my.tudemaha.lobos.dto.request.UserRegister;
+import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -31,5 +31,24 @@ public class UserController {
     public ResponseEntity<HttpResponse<AccessToken>> login(@RequestBody UserLogin userLogin) {
         AccessToken accessToken = userService.login(userLogin);
         return ResponseEntity.ok(HttpResponse.success("login successfully", accessToken));
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<HttpResponse<Void>> updateUser(
+            @RequestBody UserUpdate userUpdate,
+            @AuthenticationPrincipal User user
+            ) {
+        userService.update(userUpdate, user.getId());
+        return ResponseEntity.ok(HttpResponse.success("profile updated successfully", null));
+    }
+
+    @PatchMapping("/update-email")
+    public ResponseEntity<HttpResponse<Void>> updateEmail() {
+        return ResponseEntity.ok(HttpResponse.success("email updated successfully", null));
+    }
+
+    @PatchMapping("/update-password")
+    public ResponseEntity<HttpResponse<Void>> updatePassword() {
+        return ResponseEntity.ok(HttpResponse.success("password updated successfully", null));
     }
 }
