@@ -1,4 +1,4 @@
-package id.my.tudemaha.lobos.dto;
+package id.my.tudemaha.lobos.dto.response;
 
 import lombok.Data;
 

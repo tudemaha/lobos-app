@@ -42,6 +42,11 @@ public class UserRepository {
         return jdbcTemplate.query(sql, userRowMapper, email).stream().findFirst();
     }
 
+    public Optional<User> findById(String id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        return jdbcTemplate.query(sql, userRowMapper, id).stream().findFirst();
+    }
+
     public void save(User user) {
         String sql = "INSERT INTO users (first_name, last_name, email, password)" +
                 " VALUES (?, ?, ?, ?)";

@@ -1,11 +1,11 @@
 package id.my.tudemaha.lobos.mapper;
 
-import id.my.tudemaha.lobos.dto.UserRequest;
+import id.my.tudemaha.lobos.dto.request.UserRegister;
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.utils.PasswordHasher;
 
 public class UserMapper {
-    public static User toEntity(UserRequest request) {
+    public static User toEntity(UserRegister request) {
         User user = new User();
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
