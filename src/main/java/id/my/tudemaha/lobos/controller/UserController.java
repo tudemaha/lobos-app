@@ -1,10 +1,8 @@
 package id.my.tudemaha.lobos.controller;
 
-import id.my.tudemaha.lobos.dto.request.UserUpdate;
+import id.my.tudemaha.lobos.dto.request.*;
 import id.my.tudemaha.lobos.dto.response.AccessToken;
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
-import id.my.tudemaha.lobos.dto.request.UserLogin;
-import id.my.tudemaha.lobos.dto.request.UserRegister;
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.service.UserService;
 import jakarta.validation.Valid;
@@ -43,13 +41,27 @@ public class UserController {
         return ResponseEntity.ok(HttpResponse.success("profile updated successfully", null));
     }
 
-    @PatchMapping("/update-email")
-    public ResponseEntity<HttpResponse<Void>> updateEmail() {
+    @PatchMapping("/email")
+    public ResponseEntity<HttpResponse<Void>> updateEmail(
+            @Valid @RequestBody UpdateEmail updateEmail,
+            @AuthenticationPrincipal User user
+    ) {
+        userService.updateEmail(updateEmail, user.getId());
         return ResponseEntity.ok(HttpResponse.success("email updated successfully", null));
     }
 
-    @PatchMapping("/update-password")
-    public ResponseEntity<HttpResponse<Void>> updatePassword() {
+    @PatchMapping("/password")
+    public ResponseEntity<HttpResponse<Void>> updatePassword(
+            @Valid @RequestBody UpdatePassword updatePassword,
+            @AuthenticationPrincipal User user
+            ) {
+        userService.updatePassword(updatePassword, user.getId());
         return ResponseEntity.ok(HttpResponse.success("password updated successfully", null));
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<HttpResponse<Void>> deleteUser(@AuthenticationPrincipal User user) {
+        userService.delete(user.getId());
+        return ResponseEntity.ok(HttpResponse.success("user deleted successfully", null));
     }
 }

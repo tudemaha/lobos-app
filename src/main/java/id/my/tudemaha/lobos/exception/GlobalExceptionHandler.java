@@ -56,4 +56,13 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(HttpResponse.error("invalid input", errors));
     }
+
+    @ExceptionHandler(ForbiddenAccessException.class)
+    public ResponseEntity<HttpResponse<Void>> handleForbiddenAccessException(ForbiddenAccessException e) {
+        List<String> errors = new ArrayList<>();
+        errors.add(e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(HttpResponse.error("forbidden access", errors));
+    }
 }
