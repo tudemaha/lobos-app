@@ -7,6 +7,7 @@ import id.my.tudemaha.lobos.dto.request.UserLogin;
 import id.my.tudemaha.lobos.dto.request.UserRegister;
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,20 +23,20 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<HttpResponse<Void>> registerUser(@RequestBody UserRegister userRegister) {
+    public ResponseEntity<HttpResponse<Void>> registerUser(@Valid @RequestBody UserRegister userRegister) {
         userService.register(userRegister);
         return ResponseEntity.status(HttpStatus.CREATED).body(HttpResponse.success("user registered successfully", null));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<HttpResponse<AccessToken>> login(@RequestBody UserLogin userLogin) {
+    public ResponseEntity<HttpResponse<AccessToken>> login(@Valid @RequestBody UserLogin userLogin) {
         AccessToken accessToken = userService.login(userLogin);
         return ResponseEntity.ok(HttpResponse.success("login successfully", accessToken));
     }
 
     @PutMapping("/update")
     public ResponseEntity<HttpResponse<Void>> updateUser(
-            @RequestBody UserUpdate userUpdate,
+            @Valid @RequestBody UserUpdate userUpdate,
             @AuthenticationPrincipal User user
             ) {
         userService.update(userUpdate, user.getId());
