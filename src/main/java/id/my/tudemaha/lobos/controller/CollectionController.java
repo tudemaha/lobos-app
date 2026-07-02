@@ -1,6 +1,7 @@
 package id.my.tudemaha.lobos.controller;
 
 import id.my.tudemaha.lobos.dto.request.CreateCollection;
+import id.my.tudemaha.lobos.dto.request.PaginationRequest;
 import id.my.tudemaha.lobos.dto.response.CollectionList;
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
 import id.my.tudemaha.lobos.model.User;
@@ -33,8 +34,14 @@ public class CollectionController {
     }
 
     @GetMapping
-    public ResponseEntity<HttpResponse<CollectionList>> getAllCollections(@AuthenticationPrincipal User user) {
-        CollectionList collectionList = collectionService.getCollectionsByUserId(user.getId());
+    public ResponseEntity<HttpResponse<CollectionList>> getAllCollections(
+            @AuthenticationPrincipal User user,
+            @ModelAttribute PaginationRequest paginationRequest
+            ) {
+        CollectionList collectionList = collectionService.getCollectionsByUserId(
+                user.getId(),
+                paginationRequest
+        );
         return ResponseEntity
                 .ok(HttpResponse.success("successfully get collections", collectionList));
     }

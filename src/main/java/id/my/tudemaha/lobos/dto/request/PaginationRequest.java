@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class PaginationRequest {
-    private int page;
-    private int perPage;
+    private Integer page;
+    private Integer perPage;
     private String query;
 }
+

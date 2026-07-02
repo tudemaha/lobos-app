@@ -1,9 +1,13 @@
 package id.my.tudemaha.lobos.service;
 
 import id.my.tudemaha.lobos.dto.request.CreateCollection;
+import id.my.tudemaha.lobos.dto.request.PaginationRequest;
 import id.my.tudemaha.lobos.dto.response.CollectionData;
 import id.my.tudemaha.lobos.dto.response.CollectionList;
+import id.my.tudemaha.lobos.dto.response.PaginationResponse;
+import id.my.tudemaha.lobos.utils.Pagination;
 import id.my.tudemaha.lobos.exception.ForbiddenAccessException;
+
 import id.my.tudemaha.lobos.exception.NotFoundException;
 import id.my.tudemaha.lobos.mapper.CollectionMapper;
 import id.my.tudemaha.lobos.model.Collection;
@@ -28,18 +32,28 @@ public class CollectionService {
         collectionRepository.insert(collection);
     }
 
-    public CollectionList getCollectionsByUserId(String id) {
-        List<Collection> collections = collectionRepository.findAllByUserId(id);
+    public CollectionList getCollectionsByUserId(String id, PaginationRequest paginationRequest) {
+        PaginationRequest validPaginationRequest = Pagination.buildPaginationRequest(paginationRequest);
+        CollectionRepository.PaginatedCollection paginatedCollection = collectionRepository.findAllByUserId(id, validPaginationRequest);
 
-        List<CollectionData> collectionDataList = collections
+        List<CollectionData> collectionData = paginatedCollection.collections()
                 .stream()
                 .map(CollectionMapper::toDto)
                 .toList();
 
+        PaginationResponse paginationResponse = new PaginationResponse();
+        paginationResponse.setPage(validPaginationRequest.getPage());
+        paginationResponse.setTotalPage(
+                Math.ceilDiv(paginatedCollection.totalCount(), validPaginationRequest.getPerPage())
+        );
+
         CollectionList collectionList = new CollectionList();
-        collectionList.setCollections(collectionDataList);
+        collectionList.setCollections(collectionData);
+        collectionList.setPagination(paginationResponse);
+
         return collectionList;
     }
+
 
     public void update(CreateCollection createCollection, String collectionId, String userId) {
         Optional<Collection> collectionOpt = collectionRepository.findById(collectionId);

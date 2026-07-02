@@ -1,5 +1,6 @@
 package id.my.tudemaha.lobos.repository;
 
+import id.my.tudemaha.lobos.dto.request.PaginationRequest;
 import id.my.tudemaha.lobos.model.Collection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -7,10 +8,14 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import id.my.tudemaha.lobos.utils.Pagination;
 import java.sql.PreparedStatement;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 
 @Repository
 public class CollectionRepository {
@@ -44,11 +49,34 @@ public class CollectionRepository {
         }, keyHolder);
     }
 
-    public List<Collection> findAllByUserId(String userId) {
-        String sql = "SELECT * FROM collections WHERE user_id = ?" +
-                " ORDER BY created_at DESC";
-        return jdbcTemplate.query(sql, collectionRowMapper, userId);
+    public record PaginatedCollection(List<Collection> collections, int totalCount) {}
+
+    public PaginatedCollection findAllByUserId(String userId, PaginationRequest paginationRequest) {
+        int limit = paginationRequest.getPerPage();
+        int offset = (paginationRequest.getPage() - 1) * limit;
+
+        List<Object> params = new ArrayList<>();
+
+        String baseQuery = " FROM collections WHERE user_id = ?";
+        params.add(userId);
+
+        if (paginationRequest.getQuery() != null && !paginationRequest.getQuery().isBlank()) {
+            baseQuery += " AND name LIKE ?";
+            params.add("%" + paginationRequest.getQuery() + "%");
+        }
+
+        String countQuery = "SELECT COUNT(*)" + baseQuery;
+        Integer count = jdbcTemplate.queryForObject(countQuery, Integer.class, params.toArray());
+        int totalCount = count != null ? count : 0;
+
+        String query = "SELECT *" + baseQuery + " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+        params.add(limit);
+        params.add(offset);
+
+        List<Collection> collections = jdbcTemplate.query(query, collectionRowMapper, params.toArray());
+        return new PaginatedCollection(collections, totalCount);
     }
+
 
     public Optional<Collection> findById(String id) {
         String sql = "SELECT * FROM collections WHERE id = ?";
