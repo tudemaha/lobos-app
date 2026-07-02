@@ -8,7 +8,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import id.my.tudemaha.lobos.utils.Pagination;
 import java.sql.PreparedStatement;
 
 import java.time.LocalDateTime;
