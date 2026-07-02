@@ -5,7 +5,7 @@ import id.my.tudemaha.lobos.dto.response.AccessToken;
 import id.my.tudemaha.lobos.exception.DuplicateEmailException;
 import id.my.tudemaha.lobos.exception.ForbiddenAccessException;
 import id.my.tudemaha.lobos.exception.LoginException;
-import id.my.tudemaha.lobos.exception.UserNotFoundException;
+import id.my.tudemaha.lobos.exception.NotFoundException;
 import id.my.tudemaha.lobos.mapper.UserMapper;
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.repository.UserRepository;
@@ -60,7 +60,7 @@ public class UserService {
     public void update(UserUpdate userUpdate, String id) {
         Optional<User> userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) {
-            throw new UserNotFoundException();
+            throw new NotFoundException();
         }
 
         User user = userOpt.get();
@@ -77,7 +77,7 @@ public class UserService {
 
         userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) {
-            throw new UserNotFoundException();
+            throw new NotFoundException();
         }
 
         User user = userOpt.get();
@@ -88,7 +88,7 @@ public class UserService {
     public void updatePassword(UpdatePassword updatePassword, String id) {
         Optional<User> userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) {
-            throw new UserNotFoundException();
+            throw new NotFoundException();
         }
 
         User user = userOpt.get();
@@ -109,7 +109,7 @@ public class UserService {
     public void delete(String id) {
         Optional<User> userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) {
-            throw new UserNotFoundException();
+            throw new NotFoundException();
         }
 
         userRepository.delete(id);
