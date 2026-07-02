@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout}">
+
+<title>Collections — Lobos</title>
+
+<th:block th:fragment="head-extra"></th:block>
+
+<th:block th:fragment="main-content">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+
+    <!-- Page header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-900">My Collections</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Organize your grammar entries into themed collections</p>
+        </div>
+        <button type="button"
+                id="btn-new-collection"
+                onclick="openCreateModal()"
+                class="btn-primary whitespace-nowrap self-start sm:self-auto">
+            + New Collection
+        </button>
+    </div>
+
+    <!-- Flash messages -->
+    <div th:if="${successMessage}" class="mb-5 bg-green-50 border border-green-200 rounded-md px-4 py-3 text-sm text-green-700">
+        <span th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage}" class="mb-5 bg-red-50 border border-red-200 rounded-md px-4 py-3 text-sm text-red-600">
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${collectionList == null or collectionList.collections.isEmpty()}"
+         class="text-center py-20 text-gray-400">
+        <svg class="mx-auto w-12 h-12 mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M3 7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+        </svg>
+        <p class="text-base">No collections yet.</p>
+        <p class="text-sm mt-1">Click <strong>+ New Collection</strong> to get started.</p>
+    </div>
+
+    <!-- Collections grid -->
+    <div th:if="${collectionList != null and !collectionList.collections.isEmpty()}"
+         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+        <div th:each="col : ${collectionList.collections}"
+             class="group bg-white border border-gray-200 rounded-xl p-5 flex flex-col gap-3 hover:shadow-md transition-shadow relative overflow-hidden">
+
+            <!-- Color strip -->
+            <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl"
+                 th:style="'background-color: ' + ${col.color}"></div>
+
+            <!-- Name + actions -->
+            <div class="flex items-start justify-between pl-3">
+                <div>
+                    <h2 class="text-lg font-medium text-gray-900 truncate max-w-[160px]" th:text="${col.name}">Collection Name</h2>
+                    <p class="text-xs text-gray-400 mt-0.5"
+                       th:text="${col.createdAt != null} ? 'Created ' + ${#temporals.format(col.createdAt, 'MMM d, yyyy')} : ''"></p>
+                </div>
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <!-- Edit button -->
+                    <button type="button"
+                            th:attr="data-id=${col.id}, data-name=${col.name}, data-color=${col.color}"
+                            onclick="openEditModal(this)"
+                            class="p-1.5 rounded-md text-gray-400 hover:text-blue-pastel hover:bg-gray-100 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-1a2 2 0 01.586-1.414z"/>
+                        </svg>
+                    </button>
+                    <!-- Delete button -->
+                    <button type="button"
+                            th:attr="data-id=${col.id}, data-name=${col.name}"
+                            onclick="confirmDelete(this)"
+                            class="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4h6v3M4 7h16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Color swatch + link -->
+            <div class="pl-3 flex items-center justify-between mt-auto">
+                <span class="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                    <span class="inline-block w-3 h-3 rounded-full border border-gray-200"
+                          th:style="'background-color: ' + ${col.color}"></span>
+                    <span th:text="${col.color}"></span>
+                </span>
+                <a th:href="@{/collections/{id}/grammars(id=${col.id})}"
+                   class="text-sm pastel-blue hover:underline font-medium">
+                    View &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div th:if="${collectionList != null and collectionList.pagination.totalPage > 1}"
+         class="flex items-center justify-center gap-2 mt-10">
+        <a th:if="${collectionList.pagination.page > 1}"
+           th:href="@{/collections(page=${collectionList.pagination.page - 1})}"
+           class="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition">
+            &larr; Prev
+        </a>
+        <span class="px-3 py-1.5 text-sm text-gray-500">
+            Page <span th:text="${collectionList.pagination.page}"></span>
+            of <span th:text="${collectionList.pagination.totalPage}"></span>
+        </span>
+        <a th:if="${collectionList.pagination.page < collectionList.pagination.totalPage}"
+           th:href="@{/collections(page=${collectionList.pagination.page + 1})}"
+           class="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition">
+            Next &rarr;
+        </a>
+    </div>
+</div>
+
+<!-- ── CREATE COLLECTION MODAL ── -->
+<div id="modal-create"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-5">New Collection</h2>
+
+        <form th:action="@{/collections}" method="post" class="space-y-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <!-- Name -->
+            <div>
+                <label for="create-col-name" class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-400">*</span></label>
+                <input id="create-col-name"
+                       type="text"
+                       name="name"
+                       required
+                       maxlength="100"
+                       placeholder="e.g. Japanese Particles"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-base text-gray-900 placeholder-gray-400 focus-pastel transition" />
+            </div>
+
+            <!-- Color -->
+            <div>
+                <label for="create-col-color" class="block text-sm font-medium text-gray-700 mb-1">Color <span class="text-red-400">*</span></label>
+                <div class="flex items-center gap-3">
+                    <input id="create-col-color-picker"
+                           type="color"
+                           value="#70A3C9"
+                           oninput="syncColorInput('create-col-color', this.value)"
+                           class="w-10 h-10 rounded-md border border-gray-300 cursor-pointer p-0.5" />
+                    <input id="create-col-color"
+                           type="text"
+                           name="color"
+                           required
+                           value="#70A3C9"
+                           pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                           placeholder="#FF5733"
+                           oninput="syncColorPicker('create-col-color-picker', this.value)"
+                           class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-base text-gray-900 font-mono focus-pastel transition" />
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeCreateModal()" class="btn-outline">Cancel</button>
+                <button type="submit" id="btn-create-collection-submit" class="btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── EDIT COLLECTION MODAL ── -->
+<div id="modal-edit"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-5">Edit Collection</h2>
+
+        <form id="edit-collection-form" th:action="@{/collections/__}" method="post" class="space-y-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="_method" value="PUT"/>
+            <input type="hidden" id="edit-col-id" name="_id" value=""/>
+
+            <!-- Name -->
+            <div>
+                <label for="edit-col-name" class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-400">*</span></label>
+                <input id="edit-col-name"
+                       type="text"
+                       name="name"
+                       required
+                       maxlength="100"
+                       placeholder="e.g. Japanese Particles"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-base text-gray-900 placeholder-gray-400 focus-pastel transition" />
+            </div>
+
+            <!-- Color -->
+            <div>
+                <label for="edit-col-color" class="block text-sm font-medium text-gray-700 mb-1">Color <span class="text-red-400">*</span></label>
+                <div class="flex items-center gap-3">
+                    <input id="edit-col-color-picker"
+                           type="color"
+                           value="#70A3C9"
+                           oninput="syncColorInput('edit-col-color', this.value)"
+                           class="w-10 h-10 rounded-md border border-gray-300 cursor-pointer p-0.5" />
+                    <input id="edit-col-color"
+                           type="text"
+                           name="color"
+                           required
+                           pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                           placeholder="#FF5733"
+                           oninput="syncColorPicker('edit-col-color-picker', this.value)"
+                           class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-base text-gray-900 font-mono focus-pastel transition" />
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeEditModal()" class="btn-outline">Cancel</button>
+                <button type="submit" id="btn-edit-collection-submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- DELETE hidden form -->
+<form id="delete-collection-form" method="post" th:action="@{/collections/__}">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <input type="hidden" name="_method" value="DELETE"/>
+</form>
+</th:block>
+
+<th:block th:fragment="scripts">
+<script>
+    // ── Modal helpers ──
+    function openCreateModal() {
+        document.getElementById('modal-create').classList.remove('hidden');
+    }
+    function closeCreateModal() {
+        document.getElementById('modal-create').classList.add('hidden');
+    }
+    function openEditModal(btn) {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        const color = btn.getAttribute('data-color');
+        document.getElementById('edit-col-id').value = id;
+        document.getElementById('edit-col-name').value = name;
+        document.getElementById('edit-col-color').value = color;
+        document.getElementById('edit-col-color-picker').value = color;
+        document.getElementById('edit-collection-form').action = '/collections/' + id;
+        document.getElementById('modal-edit').classList.remove('hidden');
+    }
+    function closeEditModal() {
+        document.getElementById('modal-edit').classList.add('hidden');
+    }
+    function confirmDelete(btn) {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        if (confirm('Delete collection "' + name + '"? This will remove all grammars inside it.')) {
+            const form = document.getElementById('delete-collection-form');
+            form.action = '/collections/' + id;
+            form.submit();
+        }
+    }
+    // ── Color sync ──
+    function syncColorInput(inputId, value) {
+        document.getElementById(inputId).value = value;
+    }
+    function syncColorPicker(pickerId, value) {
+        if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value)) {
+            document.getElementById(pickerId).value = value;
+        }
+    }
+    // Close modal on backdrop click
+    ['modal-create', 'modal-edit'].forEach(function(id) {
+        document.getElementById(id).addEventListener('click', function(e) {
+            if (e.target === this) this.classList.add('hidden');
+        });
+    });
+</script>
+</th:block>
+</html>

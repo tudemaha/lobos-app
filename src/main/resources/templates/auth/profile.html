@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout}">
+
+<title>Profile &amp; Settings — Lobos</title>
+
+<th:block th:fragment="head-extra"></th:block>
+
+<th:block th:fragment="main-content">
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-10">
+
+    <h1 class="text-2xl font-semibold text-gray-900 mb-8">Profile &amp; Settings</h1>
+
+    <!-- Success / Error flash messages -->
+    <div th:if="${successMessage}" class="mb-6 bg-green-50 border border-green-200 rounded-md px-4 py-3 text-sm text-green-700">
+        <span th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage}" class="mb-6 bg-red-50 border border-red-200 rounded-md px-4 py-3 text-sm text-red-600">
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <!-- ── Section 1: Update Profile (firstName / lastName) ── -->
+    <section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+        <h2 class="text-lg font-medium text-gray-800 mb-4">Personal Information</h2>
+
+        <!-- Global errors -->
+        <div th:if="${profileErrors != null and !profileErrors.isEmpty()}" class="mb-4 bg-red-50 border border-red-200 rounded-md px-4 py-3 text-sm text-red-600">
+            <ul class="list-disc list-inside space-y-0.5">
+                <li th:each="err : ${profileErrors}" th:text="${err}"></li>
+            </ul>
+        </div>
+
+        <form th:action="@{/auth/update}"
+              th:object="${userUpdate}"
+              method="post"
+              class="space-y-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- First Name -->
+                <div>
+                    <label for="profile-firstName" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <input id="profile-firstName"
+                           type="text"
+                           th:field="*{firstName}"
+                           placeholder="John"
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-base text-gray-900 placeholder-gray-400 focus-pastel transition"
+                           th:classappend="${#fields.hasErrors('firstName')} ? ' border-red-400' : ''" />
+                    <span th:if="${#fields.hasErrors('firstName')}"
+                          th:errors="*{firstName}"
+                          class="text-xs text-red-500 mt-0.5 block"></span>
+                </div>
+
+                <!-- Last Name -->
+                <div>
+                    <label for="profile-lastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <input id="profile-lastName"
+                           type="text"
+                           th:field="*{lastName}"
+                           placeholder="Doe"
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-base text-gray-900 placeholder-gray-400 focus-pastel transition"
+                           th:classappend="${#fields.hasErrors('lastName')} ? ' border-red-400' : ''" />
+                    <span th:if="${#fields.hasErrors('lastName')}"
+                          th:errors="*{lastName}"
+                          class="text-xs text-red-500 mt-0.5 block"></span>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" id="btn-update-profile" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- ── Section 2: Update Email ── -->
+    <section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+        <h2 class="text-lg font-medium text-gray-800 mb-4">Email Address</h2>
+
+        <div th:if="${emailErrors != null and !emailErrors.isEmpty()}" class="mb-4 bg-red-50 border border-red-200 rounded-md px-4 py-3 text-sm text-red-600">
+            <ul class="list-disc list-inside space-y-0.5">
+                <li th:each="err : ${emailErrors}" th:text="${err}"></li>
+            </ul>
+        </div>
+
+        <form th:action="@{/auth/email}"
+              th:object="${updateEmail}"
+              method="post"
+              class="space-y-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <!-- HTTP method override for PATCH -->
+            <input type="hidden" name="_method" value="PATCH"/>
+
+            <div>
+                <label for="profile-email" class="block text-sm font-medium text-gray-700 mb-1">New Email</label>
+                <input id="profile-email"
+                       type="email"
+                       th:field="*{email}"
+                       autocomplete="email"
+                       placeholder="new@example.com"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-base text-gray-900 placeholder-gray-400 focus-pastel transition"
+                       th:classappend="${#fields.hasErrors('email')} ? ' border-red-400' : ''" />
+                <span th:if="${#fields.hasErrors('email')}"
+                      th:errors="*{email}"
+                      class="text-xs text-red-500 mt-0.5 block"></span>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" id="btn-update-email" class="btn-primary">Update Email</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- ── Section 3: Update Password ── -->
+    <section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+        <h2 class="text-lg font-medium text-gray-800 mb-4">Change Password</h2>
+
+        <div th:if="${passwordErrors != null and !passwordErrors.isEmpty()}" class="mb-4 bg-red-50 border border-red-200 rounded-md px-4 py-3 text-sm text-red-600">
+            <ul class="list-disc list-inside space-y-0.5">
+                <li th:each="err : ${passwordErrors}" th:text="${err}"></li>
+            </ul>
+        </div>
+
+        <form th:action="@{/auth/password}"
+              th:object="${updatePassword}"
+              method="post"
+              class="space-y-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="_method" value="PATCH"/>
+
+            <!-- Old Password -->
+            <div>
+                <label for="pwd-old" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                <div class="relative">
+                    <input id="pwd-old"
+                           type="password"
+                           th:field="*{oldPassword}"
+                           autocomplete="current-password"
+                           placeholder="••••••••"
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-base text-gray-900 placeholder-gray-400 focus-pastel transition"
+                           th:classappend="${#fields.hasErrors('oldPassword')} ? ' border-red-400' : ''" />
+                    <button type="button" onclick="togglePwd('pwd-old')"
+                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                    </button>
+                </div>
+                <span th:if="${#fields.hasErrors('oldPassword')}"
+                      th:errors="*{oldPassword}"
+                      class="text-xs text-red-500 mt-0.5 block"></span>
+            </div>
+
+            <!-- New Password -->
+            <div>
+                <label for="pwd-new" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <div class="relative">
+                    <input id="pwd-new"
+                           type="password"
+                           th:field="*{newPassword}"
+                           autocomplete="new-password"
+                           placeholder="Min. 8 characters"
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-base text-gray-900 placeholder-gray-400 focus-pastel transition"
+                           th:classappend="${#fields.hasErrors('newPassword')} ? ' border-red-400' : ''" />
+                    <button type="button" onclick="togglePwd('pwd-new')"
+                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                    </button>
+                </div>
+                <span th:if="${#fields.hasErrors('newPassword')}"
+                      th:errors="*{newPassword}"
+                      class="text-xs text-red-500 mt-0.5 block"></span>
+            </div>
+
+            <!-- Confirm New Password -->
+            <div>
+                <label for="pwd-confirm" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                <div class="relative">
+                    <input id="pwd-confirm"
+                           type="password"
+                           th:field="*{confirmNewPassword}"
+                           autocomplete="new-password"
+                           placeholder="Repeat new password"
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-base text-gray-900 placeholder-gray-400 focus-pastel transition"
+                           th:classappend="${#fields.hasErrors('confirmNewPassword')} ? ' border-red-400' : ''" />
+                    <button type="button" onclick="togglePwd('pwd-confirm')"
+                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                    </button>
+                </div>
+                <span th:if="${#fields.hasErrors('confirmNewPassword')}"
+                      th:errors="*{confirmNewPassword}"
+                      class="text-xs text-red-500 mt-0.5 block"></span>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" id="btn-update-password" class="btn-primary">Change Password</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- ── Section 4: Danger Zone (Delete Account) ── -->
+    <section class="bg-white border border-red-200 rounded-xl p-6">
+        <h2 class="text-lg font-medium text-red-600 mb-1">Danger Zone</h2>
+        <p class="text-sm text-gray-500 mb-4">Once you delete your account, there is no going back. All your collections and grammars will be permanently removed.</p>
+        <button type="button"
+                id="btn-delete-account"
+                onclick="confirmDeleteAccount()"
+                class="px-4 py-2 rounded-md border border-red-400 text-red-500 text-sm hover:bg-red-50 transition">
+            Delete Account
+        </button>
+
+        <!-- Hidden delete form -->
+        <form id="delete-account-form"
+              th:action="@{/auth}"
+              method="post"
+              class="hidden">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="_method" value="DELETE"/>
+        </form>
+    </section>
+
+</div>
+</th:block>
+
+<th:block th:fragment="scripts">
+<script>
+    function togglePwd(id) {
+        const el = document.getElementById(id);
+        el.type = el.type === 'password' ? 'text' : 'password';
+    }
+    function confirmDeleteAccount() {
+        if (confirm('Are you sure you want to permanently delete your account? This action cannot be undone.')) {
+            document.getElementById('delete-account-form').submit();
+        }
+    }
+</script>
+</th:block>
+</html>

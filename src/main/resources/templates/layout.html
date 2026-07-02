@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:replace="~{::title}">Lobos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        garamond: ['"EB Garamond"', 'Garamond', 'Georgia', 'serif'],
+                    },
+                    colors: {
+                        blue: {
+                            pastel: '#70A3C9',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+    <style>
+        body { font-family: 'EB Garamond', Garamond, Georgia, serif; }
+        .pastel-blue { color: #70A3C9; }
+        .bg-pastel-blue { background-color: #70A3C9; }
+        .border-pastel-blue { border-color: #70A3C9; }
+        .ring-pastel-blue { --tw-ring-color: #70A3C9; }
+        .focus-pastel:focus { outline: none; border-color: #70A3C9; box-shadow: 0 0 0 2px rgba(112,163,201,0.3); }
+        .btn-primary {
+            background-color: #70A3C9;
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .btn-primary:hover { background-color: #5a8fb8; }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-outline {
+            border: 1px solid #70A3C9;
+            color: #70A3C9;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .btn-outline:hover { background-color: #70A3C9; color: white; }
+        .nav-link {
+            color: #4b5563;
+            transition: color 0.2s;
+            font-size: 1rem;
+            padding: 0.25rem 0;
+        }
+        .nav-link:hover { color: #70A3C9; }
+        .nav-link.active { color: #70A3C9; border-bottom: 1.5px solid #70A3C9; }
+        input[type="text"], input[type="email"], input[type="password"], textarea, select {
+            font-family: 'EB Garamond', Garamond, Georgia, serif;
+        }
+    </style>
+    <th:block th:replace="~{::head-extra}" />
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+<!-- NAVBAR -->
+<nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
+        <!-- Brand -->
+        <a href="/collections" class="text-xl font-semibold tracking-wide pastel-blue">
+            Lobos
+        </a>
+
+        <!-- Desktop nav -->
+        <div class="hidden sm:flex items-center gap-6">
+            <a th:href="@{/collections}"
+               th:classappend="${currentPage == 'collections'} ? ' active' : ''"
+               class="nav-link"
+               sec:authorize="isAuthenticated()">Collections</a>
+
+            <!-- Profile dropdown -->
+            <div class="relative" sec:authorize="isAuthenticated()">
+                <button id="nav-profile-btn"
+                        class="flex items-center gap-1 nav-link focus:outline-none"
+                        onclick="toggleDropdown()">
+                    <span th:text="${#authentication?.name ?: 'Account'}">Account</span>
+                    <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div id="nav-dropdown"
+                     class="hidden absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1 text-sm">
+                    <a th:href="@{/profile}" class="block px-4 py-2 hover:bg-gray-50 text-gray-700">Profile &amp; Settings</a>
+                    <hr class="my-1 border-gray-100"/>
+                    <form th:action="@{/auth/logout}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-500">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Auth links for unauthenticated users -->
+            <a th:href="@{/login}"
+               class="btn-outline text-sm"
+               sec:authorize="!isAuthenticated()">Login</a>
+            <a th:href="@{/register}"
+               class="btn-primary text-sm"
+               sec:authorize="!isAuthenticated()">Register</a>
+        </div>
+
+        <!-- Mobile hamburger -->
+        <button id="mobile-menu-btn" class="sm:hidden p-1 rounded text-gray-500 focus:outline-none" onclick="toggleMobileMenu()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden sm:hidden border-t border-gray-100 bg-white px-4 pb-4 space-y-2">
+        <a th:href="@{/collections}" class="block py-2 nav-link" sec:authorize="isAuthenticated()">Collections</a>
+        <a th:href="@{/profile}" class="block py-2 nav-link" sec:authorize="isAuthenticated()">Profile &amp; Settings</a>
+        <form th:action="@{/auth/logout}" method="post" sec:authorize="isAuthenticated()">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="block py-2 text-red-500 nav-link">Logout</button>
+        </form>
+        <a th:href="@{/login}" class="block py-2 nav-link" sec:authorize="!isAuthenticated()">Login</a>
+        <a th:href="@{/register}" class="block py-2 nav-link" sec:authorize="!isAuthenticated()">Register</a>
+    </div>
+</nav>
+
+<!-- PAGE CONTENT -->
+<main class="flex-1 w-full">
+    <th:block th:replace="~{::main-content}" />
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-white border-t border-gray-200 mt-auto">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 text-center text-sm text-gray-400">
+        &copy; 2025 Lobos &mdash; Grammar Collections
+    </div>
+</footer>
+
+<script>
+    function toggleDropdown() {
+        const dd = document.getElementById('nav-dropdown');
+        dd.classList.toggle('hidden');
+    }
+    function toggleMobileMenu() {
+        const m = document.getElementById('mobile-menu');
+        m.classList.toggle('hidden');
+    }
+    document.addEventListener('click', function(e) {
+        const btn = document.getElementById('nav-profile-btn');
+        const dd = document.getElementById('nav-dropdown');
+        if (btn && dd && !btn.contains(e.target) && !dd.contains(e.target)) {
+            dd.classList.add('hidden');
+        }
+    });
+</script>
+<th:block th:replace="~{::scripts}" />
+</body>
+</html>
