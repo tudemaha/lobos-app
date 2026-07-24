@@ -1,4 +1,4 @@
-package id.my.tudemaha.lobos.controller;
+package id.my.tudemaha.lobos.controller.api;
 
 import id.my.tudemaha.lobos.dto.request.CreateGrammar;
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
@@ -12,11 +12,10 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
-@RequestMapping("/collections/{collectionId}/grammars")
+@RestController
+@RequestMapping("/api/collections/{collectionId}/grammars")
 public class GrammarController {
     private final GrammarService grammarService;
 

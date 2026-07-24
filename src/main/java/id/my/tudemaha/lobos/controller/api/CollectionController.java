@@ -1,4 +1,4 @@
-package id.my.tudemaha.lobos.controller;
+package id.my.tudemaha.lobos.controller.api;
 
 import id.my.tudemaha.lobos.dto.request.CreateCollection;
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
@@ -10,11 +10,10 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
-@RequestMapping("/collections")
+@RestController
+@RequestMapping("/api/collections")
 public class CollectionController {
     private final CollectionService collectionService;
 
