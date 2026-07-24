@@ -40,7 +40,7 @@ public class UserService {
         userRepository.save(newUser);
     }
 
-    public AccessToken login(UserLogin userLogin) {
+    public User authenticate(UserLogin userLogin) {
         Optional<User> userOpt = userRepository.findByEmail(userLogin.getEmail());
         if (userOpt.isEmpty()) {
             throw new LoginException();
@@ -50,6 +50,12 @@ public class UserService {
         if (!PasswordHasher.checkPassword(userLogin.getPassword(), user.getPassword())) {
             throw new LoginException();
         }
+
+        return user;
+    }
+
+    public AccessToken login(UserLogin userLogin) {
+        User user = authenticate(userLogin);
         String token = jwtService.generateToken(user);
 
         AccessToken accessToken = new AccessToken();
