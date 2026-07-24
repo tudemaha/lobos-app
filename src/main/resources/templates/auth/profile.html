@@ -2,7 +2,7 @@
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layout :: layout}">
+      th:replace="~{layout :: layout(~{::title}, ~{::head-extra}, ~{::main-content}, ~{::scripts})}">
 
 <title>Profile &amp; Settings — Lobos</title>
 
@@ -36,7 +36,6 @@
               th:object="${userUpdate}"
               method="post"
               class="space-y-4">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <!-- First Name -->
@@ -88,7 +87,6 @@
               th:object="${updateEmail}"
               method="post"
               class="space-y-4">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <!-- HTTP method override for PATCH -->
             <input type="hidden" name="_method" value="PATCH"/>
 
@@ -126,7 +124,6 @@
               th:object="${updatePassword}"
               method="post"
               class="space-y-4">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input type="hidden" name="_method" value="PATCH"/>
 
             <!-- Old Password -->
@@ -223,7 +220,6 @@
               th:action="@{/auth}"
               method="post"
               class="hidden">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input type="hidden" name="_method" value="DELETE"/>
         </form>
     </section>
