@@ -2,7 +2,7 @@
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layout :: layout}">
+      th:replace="~{layout :: layout(~{::title}, ~{::head-extra}, ~{::main-content}, ~{::scripts})}">
 
 <title th:text="${grammar != null} ? ${grammar.word} + ' — Lobos' : 'Grammar Detail — Lobos'">Grammar Detail — Lobos</title>
 
@@ -40,7 +40,6 @@
                 <!-- Star toggle -->
                 <form th:action="@{/collections/{cid}/grammars/{gid}(cid=${collectionId},gid=${grammar.id})}"
                       method="post" class="flex-shrink-0">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" name="_method" value="PATCH"/>
                     <button type="submit"
                             id="btn-detail-star"
@@ -127,7 +126,6 @@
 
         <form th:action="@{/collections/{cid}/grammars/{gid}(cid=${collectionId},gid=${grammar != null ? grammar.id : ''})}"
               method="post" class="space-y-4">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input type="hidden" name="_method" value="PUT"/>
 
             <!-- Word -->
@@ -177,7 +175,6 @@
 <form id="delete-grammar-form"
       th:action="@{/collections/{cid}/grammars/{gid}(cid=${collectionId},gid=${grammar != null ? grammar.id : ''})}"
       method="post">
-    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
     <input type="hidden" name="_method" value="DELETE"/>
 </form>
 </th:block>

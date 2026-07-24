@@ -2,7 +2,7 @@
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{layout :: layout}">
+      th:replace="~{layout :: layout(~{::title}, ~{::head-extra}, ~{::main-content}, ~{::scripts})}">
 
 <title th:text="${collectionName != null} ? ${collectionName} + ' — Lobos' : 'Grammars — Lobos'">Grammars — Lobos</title>
 
@@ -71,7 +71,6 @@
                     <td class="px-4 py-3">
                         <form th:action="@{/collections/{cid}/grammars/{gid}(cid=${collectionId},gid=${g.id})}"
                               method="post" class="inline">
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <input type="hidden" name="_method" value="PATCH"/>
                             <button type="submit"
                                     th:id="'btn-star-' + ${g.id}"
@@ -173,7 +172,6 @@
 
         <form th:action="@{/collections/{cid}/grammars(cid=${collectionId})}"
               method="post" class="space-y-4">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
             <!-- Word -->
             <div>
@@ -225,9 +223,8 @@
         <h2 class="text-xl font-semibold text-gray-900 mb-5">Edit Grammar Entry</h2>
 
         <form id="edit-grammar-form"
-              th:action="@{/collections/{cid}/grammars/__(cid=${collectionId})}"
+              th:action="@{/collections/{cid}/grammars/placeholder(cid=${collectionId})}"
               method="post" class="space-y-4">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input type="hidden" name="_method" value="PUT"/>
 
             <!-- Word -->
@@ -272,9 +269,8 @@
 
 <!-- DELETE hidden form -->
 <form id="delete-grammar-form"
-      th:action="@{/collections/{cid}/grammars/__(cid=${collectionId})}"
+      th:action="@{/collections/{cid}/grammars/placeholder(cid=${collectionId})}"
       method="post">
-    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
     <input type="hidden" name="_method" value="DELETE"/>
 </form>
 </th:block>
