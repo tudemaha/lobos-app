@@ -105,7 +105,7 @@
     <div th:if="${collectionList != null and collectionList.pagination.totalPage > 1}"
          class="flex items-center justify-center gap-2 mt-10">
         <a th:if="${collectionList.pagination.page > 1}"
-           th:href="@{/(page=${collectionList.pagination.page - 1})}"
+           th:href="@{/collections(page=${collectionList.pagination.page - 1})}"
            class="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition">
             &larr; Prev
         </a>
@@ -114,7 +114,7 @@
             of <span th:text="${collectionList.pagination.totalPage}"></span>
         </span>
         <a th:if="${collectionList.pagination.page < collectionList.pagination.totalPage}"
-           th:href="@{/(page=${collectionList.pagination.page + 1})}"
+           th:href="@{/collections(page=${collectionList.pagination.page + 1})}"
            class="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition">
             Next &rarr;
         </a>

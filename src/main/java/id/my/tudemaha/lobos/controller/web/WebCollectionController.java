@@ -12,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
+@RequestMapping("/collections")
 public class WebCollectionController {
     private final CollectionService collectionService;
 
@@ -19,7 +20,7 @@ public class WebCollectionController {
         this.collectionService = collectionService;
     }
 
-    @GetMapping("/")
+    @GetMapping
     public String index(
             @AuthenticationPrincipal User user,
             @ModelAttribute PaginationRequest paginationRequest,
@@ -35,31 +36,31 @@ public class WebCollectionController {
         return "collections/index";
     }
 
-    @PostMapping("/collections")
+    @PostMapping
     public String createCollection(
             @AuthenticationPrincipal User user,
             @Valid @ModelAttribute("createCollection") CreateCollection createCollection
     ) {
         collectionService.createCollection(createCollection, user.getId());
-        return "redirect:/";
+        return "redirect:/collections";
     }
 
-    @PutMapping("/collections/{id}")
+    @PutMapping("/{id}")
     public String updateCollection(
             @AuthenticationPrincipal User user,
             @PathVariable String id,
             @Valid @ModelAttribute("createCollection") CreateCollection createCollection
     ) {
         collectionService.update(createCollection, id, user.getId());
-        return "redirect:/";
+        return "redirect:/collections";
     }
 
-    @DeleteMapping("/collections/{id}")
+    @DeleteMapping("/{id}")
     public String deleteCollection(
             @AuthenticationPrincipal User user,
             @PathVariable String id
     ) {
         collectionService.delete(id, user.getId());
-        return "redirect:/";
+        return "redirect:/collections";
     }
 }

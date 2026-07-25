@@ -89,7 +89,7 @@ public class AuthController {
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, request, response);
 
-        return "redirect:/";
+        return "redirect:/collections";
     }
 
     @PostMapping("/auth/logout")
