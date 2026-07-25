@@ -13,12 +13,9 @@
 
     <h1 class="text-2xl font-semibold text-gray-900 mb-8">Profile &amp; Settings</h1>
 
-    <!-- Success / Error flash messages -->
-    <div th:if="${successMessage}" class="mb-6 bg-green-50 border border-green-200 rounded-md px-4 py-3 text-sm text-green-700">
-        <span th:text="${successMessage}"></span>
-    </div>
-    <div th:if="${errorMessage}" class="mb-6 bg-red-50 border border-red-200 rounded-md px-4 py-3 text-sm text-red-600">
-        <span th:text="${errorMessage}"></span>
+    <!-- Success flash message -->
+    <div th:if="${param.updated}" class="mb-6 bg-green-50 border border-green-200 rounded-md px-4 py-3 text-sm text-green-700">
+        Changes saved successfully.
     </div>
 
     <!-- ── Section 1: Update Profile (firstName / lastName) ── -->
