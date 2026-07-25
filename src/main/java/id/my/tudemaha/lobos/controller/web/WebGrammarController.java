@@ -90,10 +90,14 @@ public class WebGrammarController {
     public String starGrammars(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
+            @RequestParam(required = false) String redirectTo,
             @AuthenticationPrincipal User user
     ) {
         grammarService.toggleStarred(grammarId, collectionId, user.getId());
 
+        if ("list".equals(redirectTo)) {
+            return "redirect:/collections/" + collectionId + "/grammars";
+        }
         return "redirect:/collections/" + collectionId + "/grammars/" + grammarId;
     }
 
