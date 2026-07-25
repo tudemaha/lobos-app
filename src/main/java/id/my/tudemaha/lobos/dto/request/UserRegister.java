@@ -8,22 +8,22 @@ import lombok.Data;
 @Data
 public class UserRegister {
 
-    @NotBlank(message = "firstName is required")
-    @Size(min = 1, max = 100, message = "firstName must be between 1 and 100 characters")
+    @NotBlank(message = "First name is required")
+    @Size(min = 1, max = 100, message = "First name must be between 1 and 100 characters")
     private String firstName;
 
-    @NotBlank(message = "lastName is required")
-    @Size(min = 1, max = 100, message = "lastName must be between 1 and 100 characters")
+    @NotBlank(message = "Last name is required")
+    @Size(min = 1, max = 100, message = "Last name must be between 1 and 100 characters")
     private String lastName;
 
-    @NotBlank(message = "email is required")
-    @Email(message = "email must be a valid email address")
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email must be a valid email address")
     private String email;
 
-    @NotBlank(message = "password is required")
-    @Size(min = 8, message = "password must be at least 8 characters")
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
-    @NotBlank(message = "confirmPassword is required")
+    @NotBlank(message = "Password confirmation is required")
     private String confirmPassword;
 }
