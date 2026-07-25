@@ -72,6 +72,7 @@
                         <form th:action="@{/collections/{cid}/grammars/{gid}(cid=${collectionId},gid=${g.id})}"
                               method="post" class="inline">
                             <input type="hidden" name="_method" value="PATCH"/>
+                            <input type="hidden" name="redirectTo" value="list"/>
                             <button type="submit"
                                     th:id="'btn-star-' + ${g.id}"
                                     class="focus:outline-none"
