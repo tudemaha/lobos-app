@@ -27,7 +27,7 @@ public class UserService {
 
     public void register(UserRegister userRegister) {
         if(!userRegister.getPassword().equals(userRegister.getConfirmPassword())) {
-            throw new IllegalArgumentException("password and confirmPassword do not match");
+            throw new IllegalArgumentException("Password and password confirmation do not match");
         }
 
         User newUser = UserMapper.toEntity(userRegister);

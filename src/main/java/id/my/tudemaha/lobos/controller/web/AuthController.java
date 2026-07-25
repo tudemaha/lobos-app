@@ -41,4 +41,66 @@ public class AuthController {
         model.addAttribute("userRegister", new UserRegister());
         return "auth/register";
     }
+
+    @PostMapping("/auth/register")
+    public String register(@Valid @ModelAttribute("userRegister") UserRegister userRegister, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return "auth/register";
+        }
+
+        try {
+            userService.register(userRegister);
+        } catch (DuplicateEmailException e) {
+            bindingResult.addError(new FieldError("userRegister", "email", e.getMessage()));
+            return "auth/register";
+        } catch (IllegalArgumentException e) {
+            bindingResult.addError(new FieldError("userRegister", "confirmPassword", e.getMessage()));
+            return "auth/register";
+        }
+
+        return "redirect:/login?registered";
+    }
+
+    @GetMapping("/login")
+    public String loginPage(Model model) {
+        model.addAttribute("userLogin", new UserLogin());
+        return "auth/login";
+    }
+
+    @PostMapping("/auth/login")
+    public String login(
+            @Valid @ModelAttribute("userLogin") UserLogin userLogin,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        User user;
+        try {
+            user = userService.authenticate(userLogin);
+        } catch(LoginException e) {
+            return "redirect:/login?error";
+        }
+
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authToken);
+        SecurityContextHolder.setContext(context);
+        securityContextRepository.saveContext(context, request, response);
+
+        return "redirect:/";
+    }
+
+    @PostMapping("/auth/logout")
+    public String logout(HttpServletRequest request) {
+        SecurityContextHolder.clearContext();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+
+        return "redirect:/login?logout";
+    }
+
 }
