@@ -76,7 +76,7 @@ public class GrammarRepository {
         Integer count = jdbcTemplate.queryForObject(queryCount, Integer.class, params.toArray());
         int totalCount = count != null ? count : 0;
 
-        String query = "SELECT *" + baseQuery + " ORDER BY word LIMIT ? OFFSET ?";
+        String query = "SELECT *" + baseQuery + " ORDER BY is_starred DESC, word LIMIT ? OFFSET ?";
         params.add(limit);
         params.add(offset);
 

@@ -60,7 +60,7 @@ public class GrammarController {
         return ResponseEntity.ok(HttpResponse.success("successfully get grammar", grammarDetail));
     }
 
-    @PutMapping("{grammarId}")
+    @PutMapping("/{grammarId}")
     public ResponseEntity<HttpResponse<Void>> updateGrammar(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
@@ -71,7 +71,7 @@ public class GrammarController {
         return ResponseEntity.ok(HttpResponse.success("grammar updated successfully", null));
     }
 
-    @PatchMapping("{grammarId}")
+    @PatchMapping("/{grammarId}")
     public ResponseEntity<HttpResponse<Void>> starGrammar(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
@@ -81,7 +81,7 @@ public class GrammarController {
         return ResponseEntity.ok(HttpResponse.success("grammar star toggled successfully", null));
     }
 
-    @DeleteMapping("{grammarId}")
+    @DeleteMapping("/{grammarId}")
     public ResponseEntity<HttpResponse<Void>> deleteGrammar(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
