@@ -73,13 +73,13 @@
 <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
         <!-- Brand -->
-        <a th:href="@{/}" class="text-xl font-semibold tracking-wide pastel-blue">
+        <a th:href="@{/collections}" class="text-xl font-semibold tracking-wide pastel-blue">
             Lobos
         </a>
 
         <!-- Desktop nav -->
         <div class="hidden sm:flex items-center gap-6">
-            <a th:href="@{/}"
+            <a th:href="@{/collections}"
                th:classappend="${currentPage == 'collections'} ? ' active' : ''"
                class="nav-link"
                sec:authorize="isAuthenticated()">Collections</a>
@@ -117,7 +117,7 @@
 
     <!-- Mobile menu -->
     <div id="mobile-menu" class="hidden sm:hidden border-t border-gray-100 bg-white px-4 pb-4 space-y-2">
-        <a th:href="@{/}" class="block py-2 nav-link" sec:authorize="isAuthenticated()">Collections</a>
+        <a th:href="@{/collections}" class="block py-2 nav-link" sec:authorize="isAuthenticated()">Collections</a>
         <a th:href="@{/profile}" class="block py-2 nav-link" sec:authorize="isAuthenticated()">Profile &amp; Settings</a>
         <form th:action="@{/auth/logout}" method="post" sec:authorize="isAuthenticated()">
             <button type="submit" class="block py-2 text-red-500 nav-link">Logout</button>
