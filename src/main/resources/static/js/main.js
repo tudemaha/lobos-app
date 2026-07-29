@@ -28,12 +28,15 @@ function hideConfirmModal() {
     document.getElementById('confirm-modal').classList.add('hidden');
     _confirmModalCallback = null;
 }
-document.getElementById('confirm-modal-cancel').addEventListener('click', hideConfirmModal);
-document.getElementById('confirm-modal-confirm').addEventListener('click', function() {
-    const callback = _confirmModalCallback;
-    hideConfirmModal();
-    if (callback) callback();
-});
-document.getElementById('confirm-modal').addEventListener('click', function(e) {
-    if (e.target === this) hideConfirmModal();
-});
+const confirmModal = document.getElementById('confirm-modal');
+if (confirmModal) {
+    document.getElementById('confirm-modal-cancel').addEventListener('click', hideConfirmModal);
+    document.getElementById('confirm-modal-confirm').addEventListener('click', function() {
+        const callback = _confirmModalCallback;
+        hideConfirmModal();
+        if (callback) callback();
+    });
+    confirmModal.addEventListener('click', function(e) {
+        if (e.target === this) hideConfirmModal();
+    });
+}
