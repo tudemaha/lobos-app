@@ -225,16 +225,6 @@
 </th:block>
 
 <th:block th:fragment="scripts">
-<script>
-    function togglePwd(id) {
-        const el = document.getElementById(id);
-        el.type = el.type === 'password' ? 'text' : 'password';
-    }
-    function confirmDeleteAccount() {
-        if (confirm('Are you sure you want to permanently delete your account? This action cannot be undone.')) {
-            document.getElementById('delete-account-form').submit();
-        }
-    }
-</script>
+<script src="/js/profile.js"></script>
 </th:block>
 </html>
