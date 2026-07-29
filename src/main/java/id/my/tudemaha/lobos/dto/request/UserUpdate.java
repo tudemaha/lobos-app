@@ -7,11 +7,11 @@ import lombok.Data;
 @Data
 public class UserUpdate {
 
-    @NotBlank(message = "firstName is required")
-    @Size(min = 1, max = 100, message = "firstName must be between 1 and 100 characters")
+    @NotBlank(message = "First name is required")
+    @Size(min = 1, max = 100, message = "First name must be between 1 and 100 characters")
     private String firstName;
 
-    @NotBlank(message = "lastName is required")
-    @Size(min = 1, max = 100, message = "lastName must be between 1 and 100 characters")
+    @NotBlank(message = "First name is required")
+    @Size(min = 1, max = 100, message = "First name must be between 1 and 100 characters")
     private String lastName;
 }

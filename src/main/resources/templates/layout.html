@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(title, headExtra, mainContent, scripts)">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:replace="${title}">Lobos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/js/tailwind-config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <th:block th:replace="${headExtra}" />
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+<!-- NAVBAR -->
+<nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
+        <!-- Brand -->
+        <a th:href="@{/collections}" class="text-xl font-semibold tracking-wide pastel-blue">
+            Lobos
+        </a>
+
+        <!-- Desktop nav -->
+        <div class="hidden sm:flex items-center gap-6">
+            <a th:href="@{/collections}"
+               th:classappend="${currentPage == 'collections'} ? ' active' : ''"
+               class="nav-link"
+               sec:authorize="isAuthenticated()">Collections</a>
+
+            <!-- Profile dropdown -->
+            <div class="relative" sec:authorize="isAuthenticated()">
+                <button id="nav-profile-btn"
+                        class="flex items-center gap-1 nav-link focus:outline-none"
+                        onclick="toggleDropdown()">
+                    <span th:text="${#authentication?.principal?.firstName ?: 'Account'}">Account</span>
+                    <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div id="nav-dropdown"
+                     class="hidden absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1 text-sm">
+                    <a th:href="@{/profile}" class="block px-4 py-2 hover:bg-gray-50 text-gray-700">Profile &amp; Settings</a>
+                    <hr class="my-1 border-gray-100"/>
+                    <form th:action="@{/auth/logout}" method="post">
+                        <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-500">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile hamburger -->
+        <button id="mobile-menu-btn" class="sm:hidden p-1 rounded text-gray-500 focus:outline-none" onclick="toggleMobileMenu()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden sm:hidden border-t border-gray-100 bg-white px-4 pb-4 space-y-2">
+        <a th:href="@{/collections}" class="block py-2 nav-link" sec:authorize="isAuthenticated()">Collections</a>
+        <a th:href="@{/profile}" class="block py-2 nav-link" sec:authorize="isAuthenticated()">Profile &amp; Settings</a>
+        <form th:action="@{/auth/logout}" method="post" sec:authorize="isAuthenticated()">
+            <button type="submit" class="block py-2 text-red-500 nav-link">Logout</button>
+        </form>
+        <a th:href="@{/login}" class="block py-2 nav-link" sec:authorize="!isAuthenticated()">Login</a>
+        <a th:href="@{/register}" class="block py-2 nav-link" sec:authorize="!isAuthenticated()">Register</a>
+    </div>
+</nav>
+
+<!-- PAGE CONTENT -->
+<main class="flex-1 w-full">
+    <th:block th:replace="${mainContent}" />
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-white border-t border-gray-200 mt-auto">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 text-center text-sm text-gray-400">
+        &copy; 2026 Lobos &mdash; Grammar Collections
+    </div>
+</footer>
+
+<!-- CONFIRM MODAL (shared) -->
+<div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <p id="confirm-modal-message" class="text-base text-gray-800 mb-6"></p>
+        <div class="flex justify-end gap-3">
+            <button type="button" id="confirm-modal-cancel" class="btn-outline">Cancel</button>
+            <button type="button" id="confirm-modal-confirm" class="px-4 py-2 rounded-md bg-red-500 text-white text-sm hover:bg-red-600 transition">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/main.js"></script>
+<th:block th:replace="${scripts}" />
+</body>
+</html>

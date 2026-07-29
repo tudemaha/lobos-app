@@ -68,7 +68,8 @@ public class GrammarRepository {
         params.add(collectionId);
 
         if (paginationRequest.getQuery() != null && !paginationRequest.getQuery().isBlank()) {
-            baseQuery += " AND word LIKE ?";
+            baseQuery += " AND (word LIKE ? OR meaning LIKE ?)";
+            params.add("%" + paginationRequest.getQuery() + "%");
             params.add("%" + paginationRequest.getQuery() + "%");
         }
 
@@ -76,7 +77,7 @@ public class GrammarRepository {
         Integer count = jdbcTemplate.queryForObject(queryCount, Integer.class, params.toArray());
         int totalCount = count != null ? count : 0;
 
-        String query = "SELECT *" + baseQuery + " ORDER BY word LIMIT ? OFFSET ?";
+        String query = "SELECT *" + baseQuery + " ORDER BY is_starred DESC, word LIMIT ? OFFSET ?";
         params.add(limit);
         params.add(offset);
 
