@@ -68,7 +68,8 @@ public class GrammarRepository {
         params.add(collectionId);
 
         if (paginationRequest.getQuery() != null && !paginationRequest.getQuery().isBlank()) {
-            baseQuery += " AND word LIKE ?";
+            baseQuery += " AND (word LIKE ? OR meaning LIKE ?)";
+            params.add("%" + paginationRequest.getQuery() + "%");
             params.add("%" + paginationRequest.getQuery() + "%");
         }
 
