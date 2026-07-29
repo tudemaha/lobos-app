@@ -37,7 +37,12 @@ src/main/java/id/my/tudemaha/lobos/
 src/main/resources/
 ├── application.properties
 ├── schema.sql           # MySQL DDL schema definitions
-└── templates/           # Thymeleaf templates (layout.html, auth/, collections/, grammars/)
+├── templates/           # Thymeleaf templates (layout.html, auth/, collections/, grammars/)
+└── static/
+    ├── index.html       # Public marketing/landing page (plain HTML, not Thymeleaf)
+    ├── css/             # Shared stylesheets (main.css) + page-specific overrides (landing.css)
+    ├── js/              # Shared script (main.js) + one file per page/feature (grammars.js, collections.js, ...)
+    └── fonts/           # Static font assets (e.g. vimala.ttf for Balinese script)
 ```
 
 ---
@@ -78,6 +83,12 @@ src/main/resources/
 - **REST Endpoints (`/api/**`)**: Guarded by `JwtAuthFilter` with stateless JWT bearer token authentication.
 - **MVC Web Routes**: Configured for session-based authentication rendering Thymeleaf views with CSRF protection enabled for form submissions.
 - Public endpoints (e.g., `/api/auth/register`, `/api/auth/login`, login/register web routes) are explicitly configured in `SecurityConfig`.
+- Static asset paths (`/css/**`, `/js/**`, `/images/**`, `/fonts/**`, `/webjars/**`) are `permitAll` in `webSecurityFilterChain` so they load on public pages (e.g. the landing page) without authentication. Add any new static asset directory here or it will 302-redirect to `/login`.
+
+### 5. Search & Pagination
+- List endpoints accept an `@ModelAttribute PaginationRequest` (`page`, `perPage`, `query`) bound automatically from query params on `GET` requests.
+- `Pagination.buildPaginationRequest` normalizes `page`/`perPage` defaults; `query` (if non-blank) is applied as a `LIKE` filter in the repository layer (see `GrammarRepository.findAllByCollectionId`, `CollectionRepository.findAllByUserId`). Multi-column `LIKE` conditions must be wrapped in parentheses (`AND (word LIKE ? OR meaning LIKE ?)`) to avoid breaking the surrounding `AND` scoping.
+- Search bars in templates are plain `GET` forms with a `name="query"` input; pagination links must carry the current `query` value forward (`th:href="@{...(page=...,query=${paginationRequest.query})}"`) so search state isn't lost when paging.
 
 ---
 
@@ -101,6 +112,25 @@ Include this script tag in the `<head>` of templates or shared layouts (`layout.
 ```
 
 Prefer standard Tailwind scale utility classes (`w-80`, `p-4`, `text-sm`, etc.) over arbitrary values (`w-[347px]`).
+
+### CSS & JS: No Inline Blocks — Use `static/css` & `static/js`
+Reusable styling/behavior lives in `src/main/resources/static/`, referenced via `<link>`/`<script src>` — never write inline `<style>` or `<script>` blocks in templates or `static/index.html`.
+- `css/main.css`: shared, site-wide rules (buttons, `nav-link`, `focus-pastel`, the Balinese `@font-face`/`.font-balinese`). Linked once in `layout.html`.
+- `css/landing.css`: overrides/rules scoped only to the public landing page (`static/index.html`), layered on top of `main.css`.
+- `js/tailwind-config.js`: the shared `tailwind.config` object, loaded right after the Tailwind CDN script.
+- `js/main.js`: cross-page behavior — nav dropdown/mobile menu toggles, `togglePwd`, and the shared confirm-modal helpers. Loaded globally from `layout.html`, and also included on `static/index.html`. Guard any DOM lookups for elements that may not exist on every page (e.g. `if (el) {...}`), since `main.js` is shared across pages with different markup.
+- One JS file per page/feature for page-specific logic (`grammars.js`, `grammar-detail.js`, `collections.js`, `profile.js`), included via that page's `scripts` fragment.
+- Server-rendered values a script needs (e.g. `collectionId`) stay in a tiny inline `th:inline="javascript"` snippet assigning a `const`, immediately followed by the external `<script src="...">` that reads it — Thymeleaf can't process external `static/js/*.js` files, so dynamic values can't live there.
+
+### Confirmations & Alerts: Use the Shared Modal, Not `confirm()`/`alert()`
+`layout.html` renders one shared `#confirm-modal` (message + Cancel/Confirm buttons) available on every Thymeleaf page. Trigger it from JS instead of native dialogs:
+```js
+showConfirmModal('Delete this item?', function() {
+    // runs only if the user confirms
+    document.getElementById('some-form').submit();
+});
+```
+`static/index.html` (the plain landing page) has no `#confirm-modal` markup — `main.js` checks for its existence before wiring listeners, so it's safe to include there even though the helper isn't used.
 
 ### Layout & Page Composition
 - Use `layout.html` as the shared base layout.
