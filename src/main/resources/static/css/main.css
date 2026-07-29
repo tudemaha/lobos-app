@@ -1,3 +1,8 @@
+@font-face {
+    font-family: 'Vimala';
+    src: url('/fonts/vimala.ttf') format('truetype');
+}
+.font-balinese { font-family: 'Vimala', serif; }
 body { font-family: 'EB Garamond', Garamond, Georgia, serif; }
 .pastel-blue { color: #70A3C9; }
 .bg-pastel-blue { background-color: #70A3C9; }
