@@ -33,6 +33,17 @@
         <span th:text="${errorMessage}"></span>
     </div>
 
+    <!-- Search bar -->
+    <form th:action="@{/collections}" method="get" class="mb-6 flex gap-2 max-w-sm">
+        <input type="search"
+               id="collection-search"
+               name="query"
+               th:value="${paginationRequest != null ? paginationRequest.query : ''}"
+               placeholder="Search collections…"
+               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus-pastel transition" />
+        <button type="submit" class="btn-primary whitespace-nowrap px-4 py-2 text-sm">Search</button>
+    </form>
+
     <!-- Empty state -->
     <div th:if="${collectionList == null or collectionList.collections.isEmpty()}"
          class="text-center py-20 text-gray-400">
@@ -105,7 +116,7 @@
     <div th:if="${collectionList != null and collectionList.pagination.totalPage > 1}"
          class="flex items-center justify-center gap-2 mt-10">
         <a th:if="${collectionList.pagination.page > 1}"
-           th:href="@{/collections(page=${collectionList.pagination.page - 1})}"
+           th:href="@{/collections(page=${collectionList.pagination.page - 1},query=${paginationRequest != null ? paginationRequest.query : null})}"
            class="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition">
             &larr; Prev
         </a>
@@ -114,7 +125,7 @@
             of <span th:text="${collectionList.pagination.totalPage}"></span>
         </span>
         <a th:if="${collectionList.pagination.page < collectionList.pagination.totalPage}"
-           th:href="@{/collections(page=${collectionList.pagination.page + 1})}"
+           th:href="@{/collections(page=${collectionList.pagination.page + 1},query=${paginationRequest != null ? paginationRequest.query : null})}"
            class="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition">
             Next &rarr;
         </a>

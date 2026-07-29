@@ -40,6 +40,23 @@
         <span th:text="${errorMessage}"></span>
     </div>
 
+    <!-- Search bar -->
+    <form th:action="@{/collections/{cid}/grammars(cid=${collectionId})}" method="get" class="mb-6 flex gap-2 max-w-sm">
+        <div class="relative flex-1">
+            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="search"
+                   id="grammar-search"
+                   name="query"
+                   th:value="${paginationRequest != null ? paginationRequest.query : ''}"
+                   placeholder="Search word or meaning…"
+                   class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder-gray-400 focus-pastel transition" />
+        </div>
+        <button type="submit" class="btn-primary whitespace-nowrap px-4 py-2 text-sm">Search</button>
+    </form>
+
     <!-- Empty state -->
     <div th:if="${grammarList == null or grammarList.grammars.isEmpty()}"
          class="text-center py-20 text-gray-400">
@@ -138,7 +155,7 @@
     <div th:if="${grammarList != null and grammarList.pagination.totalPage > 1}"
          class="flex items-center justify-center gap-2 mt-8">
         <a th:if="${grammarList.pagination.page > 1}"
-           th:href="@{/collections/{cid}/grammars(cid=${collectionId},page=${grammarList.pagination.page - 1})}"
+           th:href="@{/collections/{cid}/grammars(cid=${collectionId},page=${grammarList.pagination.page - 1},query=${paginationRequest != null ? paginationRequest.query : null})}"
            class="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition">
             &larr; Prev
         </a>
@@ -147,7 +164,7 @@
             of <span th:text="${grammarList.pagination.totalPage}"></span>
         </span>
         <a th:if="${grammarList.pagination.page < grammarList.pagination.totalPage}"
-           th:href="@{/collections/{cid}/grammars(cid=${collectionId},page=${grammarList.pagination.page + 1})}"
+           th:href="@{/collections/{cid}/grammars(cid=${collectionId},page=${grammarList.pagination.page + 1},query=${paginationRequest != null ? paginationRequest.query : null})}"
            class="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition">
             Next &rarr;
         </a>
