@@ -1,4 +1,4 @@
-package id.my.tudemaha.lobos.controller;
+package id.my.tudemaha.lobos.controller.api;
 
 import id.my.tudemaha.lobos.dto.request.*;
 import id.my.tudemaha.lobos.dto.response.AccessToken;
@@ -12,7 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class UserController {
     private final UserService userService;
 

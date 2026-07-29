@@ -1,4 +1,4 @@
-package id.my.tudemaha.lobos.controller;
+package id.my.tudemaha.lobos.controller.api;
 
 import id.my.tudemaha.lobos.dto.request.CreateGrammar;
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
@@ -12,11 +12,10 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
-@RequestMapping("/collections/{collectionId}/grammars")
+@RestController
+@RequestMapping("/api/collections/{collectionId}/grammars")
 public class GrammarController {
     private final GrammarService grammarService;
 
@@ -61,7 +60,7 @@ public class GrammarController {
         return ResponseEntity.ok(HttpResponse.success("successfully get grammar", grammarDetail));
     }
 
-    @PutMapping("{grammarId}")
+    @PutMapping("/{grammarId}")
     public ResponseEntity<HttpResponse<Void>> updateGrammar(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
@@ -72,7 +71,7 @@ public class GrammarController {
         return ResponseEntity.ok(HttpResponse.success("grammar updated successfully", null));
     }
 
-    @PatchMapping("{grammarId}")
+    @PatchMapping("/{grammarId}")
     public ResponseEntity<HttpResponse<Void>> starGrammar(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
@@ -82,7 +81,7 @@ public class GrammarController {
         return ResponseEntity.ok(HttpResponse.success("grammar star toggled successfully", null));
     }
 
-    @DeleteMapping("{grammarId}")
+    @DeleteMapping("/{grammarId}")
     public ResponseEntity<HttpResponse<Void>> deleteGrammar(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
