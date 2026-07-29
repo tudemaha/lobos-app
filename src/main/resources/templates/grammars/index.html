@@ -76,9 +76,9 @@
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-6">&star;</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Word</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Meaning</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider sm:table-cell">Meaning</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Added</th>
-                    <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider hidden">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -111,7 +111,7 @@
                     </td>
 
                     <!-- Meaning (truncated) -->
-                    <td class="px-4 py-3 text-gray-600 hidden sm:table-cell max-w-xs">
+                    <td class="px-4 py-3 text-gray-600 sm:table-cell max-w-xs">
                         <span class="line-clamp-2" th:text="${g.meaning}">meaning</span>
                     </td>
 
@@ -120,7 +120,7 @@
                         th:text="${g.createdAt != null} ? ${#temporals.format(g.createdAt, 'MMM d, yyyy')} : ''"></td>
 
                     <!-- Actions -->
-                    <td class="px-4 py-3">
+                    <td class="px-4 hidden md:table-cell py-3">
                         <div class="flex items-center justify-end gap-1">
                             <!-- View detail -->
                             <a th:href="@{/collections/{cid}/grammars/{gid}(cid=${collectionId},gid=${g.id})}"

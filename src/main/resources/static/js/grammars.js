@@ -20,11 +20,11 @@ function closeEditModal() {
 function confirmDelete(btn) {
     const id = btn.getAttribute('data-id');
     const word = btn.getAttribute('data-word');
-    if (confirm('Delete grammar entry "' + word + '"?')) {
+    showConfirmModal('Delete grammar entry "' + word + '"?', function() {
         const form = document.getElementById('delete-grammar-form');
         form.action = '/collections/' + collectionId + '/grammars/' + id;
         form.submit();
-    }
+    });
 }
 ['modal-create-grammar', 'modal-edit-grammar'].forEach(function(id) {
     document.getElementById(id).addEventListener('click', function(e) {
