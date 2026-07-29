@@ -21,11 +21,11 @@ function closeEditModal() {
 function confirmDelete(btn) {
     const id = btn.getAttribute('data-id');
     const name = btn.getAttribute('data-name');
-    if (confirm('Delete collection "' + name + '"? This will remove all grammars inside it.')) {
+    showConfirmModal('Delete collection "' + name + '"? This will remove all grammars inside it.', function() {
         const form = document.getElementById('delete-collection-form');
         form.action = '/collections/' + id;
         form.submit();
-    }
+    });
 }
 function syncColorInput(inputId, value) {
     document.getElementById(inputId).value = value;
