@@ -4,6 +4,11 @@ WORKDIR /app
 COPY pom.xml /app/pom.xml
 RUN mvn dependency:go-offline
 
+ENV DB_URL=jdbc:mysql://localhost:3306/lobos
+ENV DB_USERNAME=dummy
+ENV DB_PASSWORD=dummy
+ENV JWT_SECRET=dummy
+
 COPY src /app/src
 RUN mvn install
 
