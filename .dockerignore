@@ -1,0 +1,16 @@
+.github
+.idea
+.mvn
+target
+.gitattributes
+.gitignore
+AGENTS.md
+CLAUDE.md
+README.md
+docker-compose.yml
+Dockerfile
+.dockerignore
+LICENSE
+lobos.drawio
+mvnw
+mvnw.cmd
