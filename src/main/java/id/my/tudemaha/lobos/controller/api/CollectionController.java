@@ -6,6 +6,8 @@ import id.my.tudemaha.lobos.dto.response.CollectionList;
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.service.CollectionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/collections")
+@Tag(name = "Collections", description = "Collection management endpoints")
 public class CollectionController {
     private final CollectionService collectionService;
 
@@ -22,6 +25,7 @@ public class CollectionController {
     }
 
     @PostMapping
+    @Operation(summary = "Create a new collection")
     public ResponseEntity<HttpResponse<Void>> createCollection(
             @Valid @RequestBody CreateCollection createCollection,
             @AuthenticationPrincipal User user
@@ -33,6 +37,7 @@ public class CollectionController {
     }
 
     @GetMapping
+    @Operation(summary = "Get all collections")
     public ResponseEntity<HttpResponse<CollectionList>> getAllCollections(
             @AuthenticationPrincipal User user,
             @ModelAttribute PaginationRequest paginationRequest
@@ -46,6 +51,7 @@ public class CollectionController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update collection's metadata")
     public ResponseEntity<HttpResponse<Void>> updateCollection(
             @Valid @RequestBody CreateCollection createCollection,
             @PathVariable String id,
@@ -57,6 +63,7 @@ public class CollectionController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete a collection")
     public ResponseEntity<HttpResponse<Void>> deleteCollection(
             @PathVariable String id,
             @AuthenticationPrincipal User user

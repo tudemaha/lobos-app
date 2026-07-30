@@ -8,6 +8,8 @@ import id.my.tudemaha.lobos.dto.response.GrammarList;
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.service.GrammarService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/collections/{collectionId}/grammars")
+@Tag(name = "Grammars", description = "Grammar management endpoints")
 public class GrammarController {
     private final GrammarService grammarService;
 
@@ -24,6 +27,7 @@ public class GrammarController {
     }
 
     @PostMapping
+    @Operation(summary = "Create a new grammar")
     public ResponseEntity<HttpResponse<Void>> create(
             @Valid @RequestBody CreateGrammar createGrammar,
             @AuthenticationPrincipal User user,
@@ -36,6 +40,7 @@ public class GrammarController {
     }
 
     @GetMapping
+    @Operation(summary = "Get all grammars by collection ID")
     public ResponseEntity<HttpResponse<GrammarList>> getAllGrammars(
             @AuthenticationPrincipal User user,
             @PathVariable String collectionId,
@@ -51,6 +56,7 @@ public class GrammarController {
     }
 
     @GetMapping("/{grammarId}")
+    @Operation(summary = "Get a grammar details")
     public ResponseEntity<HttpResponse<GrammarDetail>> getGrammar(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
@@ -61,6 +67,7 @@ public class GrammarController {
     }
 
     @PutMapping("/{grammarId}")
+    @Operation(summary = "Update a grammar's details")
     public ResponseEntity<HttpResponse<Void>> updateGrammar(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
@@ -72,6 +79,7 @@ public class GrammarController {
     }
 
     @PatchMapping("/{grammarId}")
+    @Operation(summary = "Toggle star on a grammar")
     public ResponseEntity<HttpResponse<Void>> starGrammar(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
@@ -82,6 +90,7 @@ public class GrammarController {
     }
 
     @DeleteMapping("/{grammarId}")
+    @Operation(summary = "Delete a grammar")
     public ResponseEntity<HttpResponse<Void>> deleteGrammar(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
