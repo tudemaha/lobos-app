@@ -127,6 +127,54 @@ The application starts at **`http://localhost:8080`**.
 
 ---
 
+## Docker
+
+### Run with Docker Compose (prebuilt image)
+
+The prebuilt image is published to GitHub Container Registry at `ghcr.io/tudemaha/lobos:latest`. Fill in your database and JWT values in `docker-compose.yml`, then start it:
+
+```yaml
+services:
+  lobos:
+    restart: on-failure
+    image: ghcr.io/tudemaha/lobos:latest
+    environment:
+      - DB_URL=jdbc:mysql://<host>:<port>/<database>
+      - DB_USERNAME=<username>
+      - DB_PASSWORD=<password>
+      - JWT_SECRET=<secret>
+    ports:
+      - 127.0.0.1:8080:8080
+```
+
+```bash
+docker compose up -d
+```
+
+The app will be available at **`http://localhost:8080`**.
+
+### Build the image locally
+
+```bash
+docker build -t lobos .
+```
+
+### Run the image directly
+
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -e DB_URL=jdbc:mysql://<host>:<port>/<database> \
+  -e DB_USERNAME=<username> \
+  -e DB_PASSWORD=<password> \
+  -e JWT_SECRET=<secret> \
+  lobos
+```
+
+> ⚠️ **Never commit real database credentials or JWT secrets into `docker-compose.yml` or version control.**
+
+---
+
 ## Usage
 
 ### Web Interface
