@@ -196,8 +196,12 @@
 
 <!-- FOOTER -->
 <footer class="bg-white border-t border-gray-200 mt-auto">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 text-center text-sm text-gray-400">
-        &copy; 2026 Lobos &mdash; Grammar Collections
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-center text-sm text-gray-400">
+        <span>&copy; 2026 Lobos &mdash; Grammar Collections</span>
+        <span class="hidden sm:inline">&middot;</span>
+        <a href="https://github.com/tudemaha/lobos-app" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
+        <span class="hidden sm:inline">&middot;</span>
+        <a th:href="@{/swagger-ui.html}" class="nav-link">API Docs</a>
     </div>
 </footer>
 
