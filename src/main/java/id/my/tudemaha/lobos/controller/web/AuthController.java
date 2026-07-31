@@ -43,8 +43,17 @@ public class AuthController {
         this.securityContextRepository = securityContextRepository;
     }
 
+    @GetMapping("/")
+    public String indexPage() {
+        return "index";
+    }
+
     @GetMapping("/register")
-    public String registerPage(Model model) {
+    public String registerPage(@AuthenticationPrincipal User user, Model model) {
+        if (user != null) {
+            return "redirect:/collections";
+        }
+
         model.addAttribute("userRegister", new UserRegister());
         return "auth/register";
     }
@@ -69,7 +78,11 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public String loginPage(Model model) {
+    public String loginPage(@AuthenticationPrincipal User user, Model model) {
+        if (user != null) {
+            return "redirect:/collections";
+        }
+
         model.addAttribute("userLogin", new UserLogin());
         return "auth/login";
     }
