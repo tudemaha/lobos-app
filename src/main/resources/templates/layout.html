@@ -45,6 +45,7 @@
                 <div id="nav-dropdown"
                      class="hidden absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1 text-sm">
                     <a th:href="@{/profile}" class="block px-4 py-2 hover:bg-gray-50 text-gray-700">Profile &amp; Settings</a>
+                    <a th:href="@{/tokens}" class="block px-4 py-2 hover:bg-gray-50 text-gray-700">MCP</a>
                     <hr class="my-1 border-gray-100"/>
                     <form th:action="@{/auth/logout}" method="post">
                         <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-500">
@@ -67,6 +68,7 @@
     <div id="mobile-menu" class="hidden sm:hidden border-t border-gray-100 bg-white px-4 pb-4 space-y-2">
         <a th:href="@{/collections}" class="block py-2 nav-link" sec:authorize="isAuthenticated()">Collections</a>
         <a th:href="@{/profile}" class="block py-2 nav-link" sec:authorize="isAuthenticated()">Profile &amp; Settings</a>
+        <a th:href="@{/tokens}" class="block py-2 nav-link" sec:authorize="isAuthenticated()">MCP</a>
         <form th:action="@{/auth/logout}" method="post" sec:authorize="isAuthenticated()">
             <button type="submit" class="block py-2 text-red-500 nav-link">Logout</button>
         </form>
