@@ -11,6 +11,19 @@ CREATE TABLE users
     INDEX idx_email (email)
 );
 
+CREATE TABLE mcp_tokens
+(
+    id           VARCHAR(36)  NOT NULL DEFAULT (UUID()),
+    user_id      VARCHAR(36)  NOT NULL,
+    name         VARCHAR(100) NOT NULL,
+    token        VARCHAR(255) NOT NULL,
+    created_at   TIMESTAMP    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    last_used_at TIMESTAMP    NULL     DEFAULT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+    INDEX idx_token (token)
+);
+
 CREATE TABLE collections
 (
     id         VARCHAR(36)  NOT NULL DEFAULT (UUID()),

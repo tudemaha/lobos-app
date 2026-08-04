@@ -2,8 +2,6 @@ package id.my.tudemaha.lobos.dto.response;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
 public class GrammarDetail {
     private String id;

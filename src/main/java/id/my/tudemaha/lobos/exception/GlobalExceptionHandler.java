@@ -64,4 +64,11 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .body(HttpResponse.error("forbidden access", errors));
     }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<HttpResponse<Void>> handleInvalidTokenException(InvalidTokenException e) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(HttpResponse.error(e.getMessage(), null));
+    }
 }
