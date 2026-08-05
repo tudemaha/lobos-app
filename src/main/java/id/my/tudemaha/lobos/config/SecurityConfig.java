@@ -2,7 +2,9 @@ package id.my.tudemaha.lobos.config;
 
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
 import id.my.tudemaha.lobos.security.JwtAuthFilter;
+import id.my.tudemaha.lobos.security.McpAuthFilter;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -27,9 +29,17 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final McpAuthFilter mcpAuthFilter;
+    private final ObjectMapper objectMapper;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(
+            JwtAuthFilter jwtAuthFilter,
+            McpAuthFilter mcpAuthFilter,
+            ObjectMapper objectMapper
+    ) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.mcpAuthFilter = mcpAuthFilter;
+        this.objectMapper = objectMapper;
     }
 
     @Bean
@@ -53,6 +63,20 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
+    public SecurityFilterChain mcpSecurityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository) {
+        http
+                .securityMatcher("/mcp/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(restAuthenticationEntryPoint(objectMapper)))
+                .addFilterBefore(mcpAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(3)
     public SecurityFilterChain webSecurityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository) {
         http
                 .csrf(Customizer.withDefaults())
@@ -86,5 +110,19 @@ public class SecurityConfig {
                     HttpResponse.error("forbidden access", List.of("authentication required"))
             ));
         };
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtAuthFilter> jwtAuthFilterRegistration(JwtAuthFilter jwtAuthFilter) {
+        FilterRegistrationBean<JwtAuthFilter> registration = new FilterRegistrationBean<>(jwtAuthFilter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<McpAuthFilter> mcpAuthFilterRegistration(McpAuthFilter mcpAuthFilter) {
+        FilterRegistrationBean<McpAuthFilter> registration = new FilterRegistrationBean<>(mcpAuthFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 }
