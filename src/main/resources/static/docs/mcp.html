@@ -69,9 +69,15 @@
                 <pre class="bg-gray-900 text-gray-100 text-xs font-mono rounded-md p-4 overflow-x-auto">{
   "mcpServers": {
     "lobos": {
-      "url": "https://lobos.tudemaha.my.id/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_TOKEN"
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://lobos.tudemaha.my.id/mcp",
+        "--header",
+        "Authorization: Bearer ${MCP_TOKEN}"
+      ],
+      "env": {
+        "MCP_TOKEN": "your-lobos-mcp-token"
       }
     }
   }
