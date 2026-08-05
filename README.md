@@ -11,6 +11,7 @@ A vocabulary and grammar management application built with **Spring Boot**. Lobo
 - 🔐 **Authentication** — Register, log in, update your profile, and log out securely
 - 🌐 **Web UI** — Full-featured browser interface built with Thymeleaf and Tailwind CSS
 - 🔌 **REST API** — Stateless JSON API secured with JWT bearer tokens
+- 🤖 **MCP Server** — Remote MCP server (Streamable HTTP) exposing collections and grammars as tools for AI clients, secured with scoped MCP tokens
 - 📄 **Pagination** — Navigate large lists with built-in pagination
 
 ---
@@ -29,6 +30,7 @@ A vocabulary and grammar management application built with **Spring Boot**. Lobo
 | Frontend CSS | Tailwind CSS via CDN                           |
 | Password     | jBCrypt                                        |
 | JWT          | JJWT 0.12.6                                   |
+| MCP Server   | Spring AI MCP Server (WebMVC, Streamable HTTP) |
 
 ---
 
@@ -39,29 +41,31 @@ src/main/java/id/my/tudemaha/lobos/
 ├── config/             # Security & application configuration
 ├── controller/
 │   ├── api/            # REST controllers (@RestController, /api prefix)
-│   └── web/            # MVC controllers (@Controller, Thymeleaf views)
+│   ├── web/            # MVC controllers (@Controller, Thymeleaf views)
+│   └── mcp/            # MCP tools (@McpTool components exposed over the MCP server)
 ├── dto/
 │   ├── request/        # Incoming request DTOs
 │   └── response/       # Outgoing response DTOs
 ├── exception/          # Custom exceptions & GlobalExceptionHandler
 ├── mapper/             # Entity ↔ DTO mappers
-├── model/              # Domain models (User, Collection, Grammar)
+├── model/              # Domain models (User, Collection, Grammar, McpToken)
 ├── repository/         # Data access via JdbcTemplate
-├── security/           # JWT filter & token service
+├── security/           # JWT/MCP filters & token services
 ├── service/            # Business logic
 └── utils/              # Pagination, PasswordHasher
 
 src/main/resources/
-├── application.properties   # App configuration (DB, JWT secret)
+├── application.properties   # App configuration (DB, JWT secret, MCP server)
 ├── schema.sql               # MySQL DDL
 ├── static/
 │   ├── css/main.css         # Global styles
 │   ├── fonts/               # Custom fonts (vimala.ttf)
-│   ├── js/                  # Vanilla JS per-page scripts
+│   ├── js/                  # Vanilla JS per-page scripts (incl. mcp.js)
 │   └── index.html           # Static landing page
 └── templates/               # Thymeleaf HTML templates
     ├── layout.html           # Shared base layout
     ├── auth/                 # login.html, register.html, profile.html
+    ├── mcp/                   # index.html (MCP token management)
     ├── collections/          # index.html
     └── grammars/             # index.html, detail.html
 ```
@@ -72,6 +76,7 @@ src/main/resources/
 
 ```sql
 users        (id, first_name, last_name, email, password, created_at, updated_at)
+mcp_tokens   (id, user_id → users.id, name, token, created_at, last_used_at)
 collections  (id, name, color, user_id → users.id, created_at, updated_at)
 grammars     (id, word, meaning, example, is_starred, collection_id → collections.id, created_at, updated_at)
 ```
@@ -108,6 +113,10 @@ mysql -u <user> -p <database_name> < src/main/resources/schema.sql
 Edit `src/main/resources/application.properties`:
 
 ```properties
+spring.ai.mcp.server.name=lobos-mcp-server
+spring.ai.mcp.server.version=1.0.0
+spring.ai.mcp.server.protocol=streamable
+
 spring.datasource.url=jdbc:mysql://<host>:<port>/<database>
 spring.datasource.username=<db_user>
 spring.datasource.password=<db_password>
@@ -188,6 +197,7 @@ docker run -d \
 | `/collections`      | Manage your vocabulary collections |
 | `/grammars`         | Browse and manage grammar notes    |
 | `/grammars/{id}`    | View grammar note detail           |
+| `/tokens`           | Manage MCP tokens                  |
 
 ### REST API
 
@@ -207,6 +217,31 @@ All API endpoints are prefixed with `/api` and require a `Bearer <token>` JWT he
 | PUT    | `/api/collections/{collectionId}/grammars/{grammarId}`                | Update a grammar note              |
 | PATCH  | `/api/collections/{collectionId}/grammars/{grammarId}`                | Toggle star on a grammar note      |
 | DELETE | `/api/collections/{collectionId}/grammars/{grammarId}`                | Delete a grammar note              |
+| POST   | `/api/tokens`                                                         | Generate a new MCP token           |
+| GET    | `/api/tokens`                                                         | List user's MCP tokens             |
+| PATCH  | `/api/tokens/{id}`                                                    | Rename an MCP token                |
+| DELETE | `/api/tokens/{id}`                                                    | Revoke an MCP token                |
+
+### MCP Server
+
+Lobos embeds a remote MCP server (Streamable HTTP) at `/mcp`, letting AI clients (Claude Desktop, Claude Code, etc.) read and write a user's collections and grammars directly. It's authenticated with a dedicated MCP token — generated from the `/tokens` page — instead of the login JWT, so a leaked token can't be used to change account credentials.
+
+```bash
+claude mcp add --transport http lobos http://localhost:8080/mcp -H "Authorization: Bearer <mcp_token>"
+```
+
+| Tool                    | Description                                  |
+|-------------------------|-----------------------------------------------|
+| `list_collections`      | List the authenticated user's collections     |
+| `create_collection`     | Create a new collection                       |
+| `update_collection`     | Update a collection's name and color          |
+| `delete_collection`     | Delete a collection                           |
+| `list_grammars`         | List grammars within a collection             |
+| `get_grammar`           | Get a single grammar's detail                 |
+| `create_grammar`        | Create a grammar note inside a collection     |
+| `update_grammar`        | Update a grammar note                         |
+| `toggle_star_grammar`   | Toggle star/favorite on a grammar note        |
+| `delete_grammar`        | Delete a grammar note                         |
 
 ---
 
@@ -233,6 +268,7 @@ All API endpoints are prefixed with `/api` and require a `Bearer <token>` JWT he
 ## Security Notes
 
 - REST API (`/api/**`) uses **stateless JWT** authentication via `JwtAuthFilter`.
+- MCP server (`/mcp/**`) uses **stateless MCP tokens** (`McpAuthFilter`), separate from the login JWT and scoped to collections/grammars only.
 - Web UI uses **session-based** Spring Security authentication.
 - All POST forms include a **CSRF token** for protection.
 - Passwords are hashed with **jBCrypt**.
