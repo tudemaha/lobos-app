@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::head-extra}, ~{::main-content}, ~{::scripts})}">
+
+<title>MCP Tokens — Lobos</title>
+
+<th:block th:fragment="head-extra"></th:block>
+
+<th:block th:fragment="main-content">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+
+    <!-- Page header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-900">MCP Tokens</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Manage tokens used to connect MCP clients to your Lobos account</p>
+        </div>
+        <button type="button"
+                id="btn-new-token"
+                onclick="openCreateModal()"
+                class="btn-primary whitespace-nowrap self-start sm:self-auto">
+            + Generate Token
+        </button>
+    </div>
+
+    <!-- One-time reveal of a freshly generated token -->
+    <div th:if="${newToken}" class="mb-6 bg-blue-50 border border-blue-200 rounded-md px-4 py-3">
+        <p class="text-sm text-gray-700 mb-2">Token generated successfully. Copy it now — it won't be shown again.</p>
+        <div class="flex items-center gap-2">
+            <code id="new-token-value" class="flex-1 bg-white border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-800 break-all" th:text="${newToken}"></code>
+            <button type="button" id="btn-copy-token" onclick="copyToken()" class="btn-outline whitespace-nowrap">Copy</button>
+        </div>
+        <p id="copy-token-feedback" class="hidden text-xs text-green-600 mt-2">Copied to clipboard.</p>
+    </div>
+
+    <!-- Search bar -->
+    <form th:action="@{/tokens}" method="get" class="mb-6 flex gap-2 max-w-sm">
+        <input type="search"
+               id="token-search"
+               name="query"
+               th:value="${paginationRequest != null ? paginationRequest.query : ''}"
+               placeholder="Search tokens…"
+               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus-pastel transition" />
+        <button type="submit" class="btn-primary whitespace-nowrap px-4 py-2 text-sm">Search</button>
+    </form>
+
+    <!-- Empty state -->
+    <div th:if="${mcpTokenList == null or mcpTokenList.mcpTokens.isEmpty()}"
+         class="text-center py-20 text-gray-400">
+        <svg class="mx-auto w-12 h-12 mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M15 7a2 2 0 012 2m4 0a6 6 0 11-12 0 6 6 0 0112 0zM3 21l6.5-6.5"/>
+        </svg>
+        <p class="text-base">No MCP tokens yet.</p>
+        <p class="text-sm mt-1">Click <strong>+ Generate Token</strong> to connect an MCP client.</p>
+    </div>
+
+    <!-- Tokens list -->
+    <div th:if="${mcpTokenList != null and !mcpTokenList.mcpTokens.isEmpty()}"
+         class="flex flex-col gap-3">
+
+        <div th:each="tok : ${mcpTokenList.mcpTokens}"
+             class="bg-white border border-gray-200 rounded-xl p-5 flex items-center justify-between gap-4">
+
+            <div class="min-w-0">
+                <h2 class="text-base font-medium text-gray-900 truncate" th:text="${tok.name}">Token Name</h2>
+                <p class="text-xs font-mono text-gray-400 mt-0.5" th:text="${tok.token}"></p>
+                <p class="text-xs text-gray-400 mt-1">
+                    <span th:text="${tok.createdAt != null} ? 'Created ' + ${#temporals.format(tok.createdAt, 'MMM d, yyyy')} : ''"></span>
+                    <span th:text="${tok.lastUsedAt != null} ? ' · Last used ' + ${#temporals.format(tok.lastUsedAt, 'MMM d, yyyy HH:mm')} : ' · Never used'"></span>
+                </p>
+            </div>
+
+            <div class="flex items-center gap-1 shrink-0">
+                <!-- Edit button -->
+                <button type="button"
+                        th:attr="data-id=${tok.id}, data-name=${tok.name}"
+                        onclick="openEditModal(this)"
+                        class="p-1.5 rounded-md text-gray-400 hover:text-blue-pastel hover:bg-gray-100 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-1a2 2 0 01.586-1.414z"/>
+                    </svg>
+                </button>
+                <!-- Delete button -->
+                <button type="button"
+                        th:attr="data-id=${tok.id}, data-name=${tok.name}"
+                        onclick="confirmDelete(this)"
+                        class="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4h6v3M4 7h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div th:if="${mcpTokenList != null and mcpTokenList.pagination.totalPage > 1}"
+         class="flex items-center justify-center gap-2 mt-10">
+        <a th:if="${mcpTokenList.pagination.page > 1}"
+           th:href="@{/tokens(page=${mcpTokenList.pagination.page - 1},query=${paginationRequest != null ? paginationRequest.query : null})}"
+           class="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition">
+            &larr; Prev
+        </a>
+        <span class="px-3 py-1.5 text-sm text-gray-500">
+            Page <span th:text="${mcpTokenList.pagination.page}"></span>
+            of <span th:text="${mcpTokenList.pagination.totalPage}"></span>
+        </span>
+        <a th:if="${mcpTokenList.pagination.page < mcpTokenList.pagination.totalPage}"
+           th:href="@{/tokens(page=${mcpTokenList.pagination.page + 1},query=${paginationRequest != null ? paginationRequest.query : null})}"
+           class="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition">
+            Next &rarr;
+        </a>
+    </div>
+</div>
+
+<!-- ── CREATE TOKEN MODAL ── -->
+<div id="modal-create-token"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-5">Generate MCP Token</h2>
+
+        <form th:action="@{/tokens}" method="post" class="space-y-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <!-- Name -->
+            <div>
+                <label for="create-token-name" class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-400">*</span></label>
+                <input id="create-token-name"
+                       type="text"
+                       name="name"
+                       required
+                       maxlength="100"
+                       placeholder="e.g. Claude Desktop"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-base text-gray-900 placeholder-gray-400 focus-pastel transition" />
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeCreateModal()" class="btn-outline">Cancel</button>
+                <button type="submit" id="btn-create-token-submit" class="btn-primary">Generate</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── EDIT TOKEN MODAL ── -->
+<div id="modal-edit-token"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-5">Rename Token</h2>
+
+        <form id="edit-token-form" th:action="@{/tokens/placeholder}" method="post" class="space-y-4">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="_method" value="PATCH"/>
+
+            <!-- Name -->
+            <div>
+                <label for="edit-token-name" class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-400">*</span></label>
+                <input id="edit-token-name"
+                       type="text"
+                       name="name"
+                       required
+                       maxlength="100"
+                       placeholder="e.g. Claude Desktop"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-base text-gray-900 placeholder-gray-400 focus-pastel transition" />
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeEditModal()" class="btn-outline">Cancel</button>
+                <button type="submit" id="btn-edit-token-submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- DELETE hidden form -->
+<form id="delete-token-form" method="post" th:action="@{/tokens/placeholder}">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <input type="hidden" name="_method" value="DELETE"/>
+</form>
+</th:block>
+
+<th:block th:fragment="scripts">
+<script src="/js/mcp.js"></script>
+</th:block>
+</html>
