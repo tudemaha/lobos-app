@@ -85,7 +85,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/register", "/login", "/error").permitAll()
                         .requestMatchers("/auth/register", "/auth/login", "/auth/logout").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/webjars/**", "/docs/**").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/webjars/**", "/docs/**", "/manifest.json").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
                         .anyRequest().authenticated()
                 )
