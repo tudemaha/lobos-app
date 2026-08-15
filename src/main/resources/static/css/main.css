@@ -39,3 +39,27 @@ body { font-family: 'EB Garamond', Garamond, Georgia, serif; }
 input[type="text"], input[type="email"], input[type="password"], textarea, select {
     font-family: 'EB Garamond', Garamond, Georgia, serif;
 }
+.checkbox-pastel {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: white;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    position: relative;
+    cursor: pointer;
+}
+.checkbox-pastel:checked {
+    background-color: #70A3C9;
+    border-color: #70A3C9;
+}
+.checkbox-pastel:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}

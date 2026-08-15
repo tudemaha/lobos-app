@@ -31,7 +31,7 @@ src/main/java/id/my/tudemaha/lobos/
 ├── mapper/             # Object mappers between entities and DTOs
 ├── model/              # Domain models (User, Collection, Grammar, McpToken)
 ├── repository/         # Data access using JdbcTemplate (UserRepository, CollectionRepository, GrammarRepository, McpTokenRepository)
-├── security/           # JWT & MCP authentication filters and token utilities (JwtAuthFilter, JwtService, McpAuthFilter)
+├── security/           # JWT & MCP authentication filters and token utilities (JwtAuthFilter, JwtService, McpAuthFilter); remember-me support (AppUserDetailsService, JdbcPersistentTokenRepository)
 ├── service/            # Business logic (UserService, CollectionService, GrammarService, McpTokenService)
 └── utils/              # Common utilities (Pagination, PasswordHasher)
 
@@ -85,6 +85,7 @@ src/main/resources/
 - **REST Endpoints (`/api/**`)**: Guarded by `JwtAuthFilter` with stateless JWT bearer token authentication.
 - **MCP Server (`/mcp/**`)**: Guarded by `McpAuthFilter` with stateless MCP token (`Bearer <token>`) authentication — a separate, opaque token type (managed via `McpTokenService`/`/api/tokens`/`/tokens`), independent from the login JWT so a leaked MCP token can't be used to change account credentials.
 - **MVC Web Routes**: Configured for session-based authentication rendering Thymeleaf views with CSRF protection enabled for form submissions.
+- **Remember Me**: Optional persistent login for the web UI, backed by `PersistentTokenBasedRememberMeServices` + a custom `JdbcPersistentTokenRepository` (raw `JdbcTemplate`, not Spring's deprecated `JdbcTokenRepositoryImpl`), storing rotating tokens in the `persistent_logins` table. Since `AuthController` performs login manually (not through Spring Security's standard `UsernamePasswordAuthenticationFilter`), it must call `RememberMeServices.loginSuccess(...)` itself when the `rememberMe` checkbox is set, and `logout(...)` cancels the cookie via `LogoutHandler`. `User` implements `UserDetails` (`getUsername()` returns `id`, not `email`) so `AppUserDetailsService` can resolve the same domain `User` used everywhere else as `@AuthenticationPrincipal`, and so `persistent_logins.user_id` is keyed off the immutable `id` rather than mutable `email`. Tokens are invalidated (`removeUserTokens`) on password change and account deletion in `UserService`.
 - `SecurityConfig` defines three ordered `SecurityFilterChain` beans, one per front door: `apiSecurityFilterChain` (`/api/**`, `@Order(1)`), `mcpSecurityFilterChain` (`/mcp/**`, `@Order(2)`), `webSecurityFilterChain` (everything else, `@Order(3)`).
 - Public endpoints (e.g., `/api/auth/register`, `/api/auth/login`, login/register web routes) are explicitly configured in `SecurityConfig`.
 - Static asset paths (`/css/**`, `/js/**`, `/images/**`, `/fonts/**`, `/webjars/**`) are `permitAll` in `webSecurityFilterChain` so they load on public pages (e.g. the landing page) without authentication. Add any new static asset directory here or it will 302-redirect to `/login`.

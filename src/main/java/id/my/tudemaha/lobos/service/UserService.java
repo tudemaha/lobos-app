@@ -11,6 +11,7 @@ import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.repository.UserRepository;
 import id.my.tudemaha.lobos.security.JwtService;
 import id.my.tudemaha.lobos.utils.PasswordHasher;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -19,10 +20,12 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final PersistentTokenRepository persistentTokenRepository;
 
-    public UserService(UserRepository userRepository, JwtService jwtService) {
+    public UserService(UserRepository userRepository, JwtService jwtService,  PersistentTokenRepository persistentTokenRepository) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.persistentTokenRepository = persistentTokenRepository;
     }
 
     public void register(UserRegister userRegister) {
@@ -110,6 +113,7 @@ public class UserService {
         String hashedPassword = PasswordHasher.hashPassword(updatePassword.getNewPassword());
         user.setPassword(hashedPassword);
         userRepository.update(user);
+        persistentTokenRepository.removeUserTokens(user.getId());
     }
 
     public void delete(String id) {
@@ -118,6 +122,7 @@ public class UserService {
             throw new NotFoundException();
         }
 
+        persistentTokenRepository.removeUserTokens(id);
         userRepository.delete(id);
     }
 }
