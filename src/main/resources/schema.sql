@@ -13,10 +13,10 @@ CREATE TABLE users
 
 CREATE TABLE persistent_logins
 (
-    username  VARCHAR(200) NOT NULL,
-    series    VARCHAR(64)  NOT NULL,
-    token     VARCHAR(64)  NOT NULL,
-    last_used TIMESTAMP    NOT NULL,
+    user_id   VARCHAR(36) NOT NULL,
+    series    VARCHAR(64) NOT NULL,
+    token     VARCHAR(64) NOT NULL,
+    last_used TIMESTAMP   NOT NULL,
     PRIMARY KEY (series)
 );
 

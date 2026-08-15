@@ -10,10 +10,10 @@ import java.util.Date;
 
 @Repository
 public class JdbcPersistentTokenRepository implements PersistentTokenRepository {
-    private static final String TOKEN_BY_SERIES_SQL = "SELECT username, series, token, last_used FROM persistent_logins WHERE series = ?";
-    private static final String INSERT_TOKEN_SQL = "INSERT INTO persistent_logins (username, series, token, last_used) VALUES (?, ?, ?, ?)";
+    private static final String TOKEN_BY_SERIES_SQL = "SELECT user_id, series, token, last_used FROM persistent_logins WHERE series = ?";
+    private static final String INSERT_TOKEN_SQL = "INSERT INTO persistent_logins (user_id, series, token, last_used) VALUES (?, ?, ?, ?)";
     private static final String UPDATE_TOKEN_SQL = "UPDATE persistent_logins SET token = ?, last_used = ? WHERE series = ?";
-    private static final String REMOVE_USER_TOKENS_SQL = "DELETE FROM persistent_logins WHERE username = ?";
+    private static final String REMOVE_USER_TOKENS_SQL = "DELETE FROM persistent_logins WHERE user_id = ?";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -35,7 +35,7 @@ public class JdbcPersistentTokenRepository implements PersistentTokenRepository 
     public PersistentRememberMeToken getTokenForSeries(String seriesId) {
         try {
             return jdbcTemplate.queryForObject(TOKEN_BY_SERIES_SQL, (rs, rowNum) -> new PersistentRememberMeToken(
-                    rs.getString("username"),
+                    rs.getString("user_id"),
                     rs.getString("series"),
                     rs.getString("token"),
                     rs.getTimestamp("last_used")
@@ -46,7 +46,7 @@ public class JdbcPersistentTokenRepository implements PersistentTokenRepository 
     }
 
     @Override
-    public void removeUserTokens(String username) {
-        jdbcTemplate.update(REMOVE_USER_TOKENS_SQL, username);
+    public void removeUserTokens(String userId) {
+        jdbcTemplate.update(REMOVE_USER_TOKENS_SQL, userId);
     }
 }

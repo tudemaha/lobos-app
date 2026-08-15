@@ -113,7 +113,7 @@ public class UserService {
         String hashedPassword = PasswordHasher.hashPassword(updatePassword.getNewPassword());
         user.setPassword(hashedPassword);
         userRepository.update(user);
-        persistentTokenRepository.removeUserTokens(user.getEmail());
+        persistentTokenRepository.removeUserTokens(user.getId());
     }
 
     public void delete(String id) {
@@ -122,7 +122,7 @@ public class UserService {
             throw new NotFoundException();
         }
 
-        persistentTokenRepository.removeUserTokens(userOpt.get().getEmail());
+        persistentTokenRepository.removeUserTokens(id);
         userRepository.delete(id);
     }
 }
