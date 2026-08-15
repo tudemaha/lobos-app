@@ -7,5 +7,6 @@ services:
       - DB_USERNAME=<username>
       - DB_PASSWORD=<password>
       - JWT_SECRET=<secret>
+      - REMEMBER_ME_KEY=<key>
     ports:
       - 127.0.0.1:8080:8080

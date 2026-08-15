@@ -20,7 +20,7 @@ A vocabulary and grammar management application built with **Spring Boot**. Lobo
 ## Tech Stack
 
 | Layer        | Technology                                     |
-|--------------|------------------------------------------------|
+| ------------ | ---------------------------------------------- |
 | Language     | Java 21                                        |
 | Framework    | Spring Boot 4.1.0                              |
 | Web / MVC    | Spring Web MVC, Thymeleaf                      |
@@ -30,7 +30,7 @@ A vocabulary and grammar management application built with **Spring Boot**. Lobo
 | Build Tool   | Maven (`./mvnw`)                               |
 | Frontend CSS | Tailwind CSS via CDN                           |
 | Password     | jBCrypt                                        |
-| JWT          | JJWT 0.12.6                                   |
+| JWT          | JJWT 0.12.6                                    |
 | MCP Server   | Spring AI MCP Server (WebMVC, Streamable HTTP) |
 
 ---
@@ -155,6 +155,7 @@ services:
       - DB_USERNAME=<username>
       - DB_PASSWORD=<password>
       - JWT_SECRET=<secret>
+      - REMEMBER_ME_KEY=<key>
     ports:
       - 127.0.0.1:8080:8080
 ```
@@ -180,10 +181,11 @@ docker run -d \
   -e DB_USERNAME=<username> \
   -e DB_PASSWORD=<password> \
   -e JWT_SECRET=<secret> \
+  -e REMEMBER_ME_KEY=<key> \
   lobos
 ```
 
-> ⚠️ **Never commit real database credentials or JWT secrets into `docker-compose.yml` or version control.**
+> ⚠️ **Never commit real database credentials, JWT secrets, or the remember-me key into `docker-compose.yml` or version control.**
 
 ---
 
@@ -191,39 +193,39 @@ docker run -d \
 
 ### Web Interface
 
-| Route                | Description                        |
-|---------------------|------------------------------------|
-| `/`                 | Landing page                       |
-| `/login`            | Log in to your account             |
-| `/register`         | Create a new account               |
-| `/profile`          | View and update your profile       |
-| `/collections`      | Manage your vocabulary collections |
-| `/grammars`         | Browse and manage grammar notes    |
-| `/grammars/{id}`    | View grammar note detail           |
-| `/tokens`           | Manage MCP tokens                  |
+| Route            | Description                        |
+| ---------------- | ---------------------------------- |
+| `/`              | Landing page                       |
+| `/login`         | Log in to your account             |
+| `/register`      | Create a new account               |
+| `/profile`       | View and update your profile       |
+| `/collections`   | Manage your vocabulary collections |
+| `/grammars`      | Browse and manage grammar notes    |
+| `/grammars/{id}` | View grammar note detail           |
+| `/tokens`        | Manage MCP tokens                  |
 
 ### REST API
 
 All API endpoints are prefixed with `/api` and require a `Bearer <token>` JWT header (except auth endpoints).
 
-| Method | Endpoint                                                              | Description                        |
-|--------|-----------------------------------------------------------------------|------------------------------------|
-| POST   | `/api/auth/register`                                                  | Register a new user                |
-| POST   | `/api/auth/login`                                                     | Log in and receive a JWT           |
-| GET    | `/api/collections`                                                    | List user's collections            |
-| POST   | `/api/collections`                                                    | Create a new collection            |
-| PUT    | `/api/collections/{id}`                                               | Update a collection                |
-| DELETE | `/api/collections/{id}`                                               | Delete a collection                |
-| GET    | `/api/collections/{collectionId}/grammars`                            | List grammar notes in a collection |
-| POST   | `/api/collections/{collectionId}/grammars`                            | Create a grammar note              |
-| GET    | `/api/collections/{collectionId}/grammars/{grammarId}`                | Get a single grammar note          |
-| PUT    | `/api/collections/{collectionId}/grammars/{grammarId}`                | Update a grammar note              |
-| PATCH  | `/api/collections/{collectionId}/grammars/{grammarId}`                | Toggle star on a grammar note      |
-| DELETE | `/api/collections/{collectionId}/grammars/{grammarId}`                | Delete a grammar note              |
-| POST   | `/api/tokens`                                                         | Generate a new MCP token           |
-| GET    | `/api/tokens`                                                         | List user's MCP tokens             |
-| PATCH  | `/api/tokens/{id}`                                                    | Rename an MCP token                |
-| DELETE | `/api/tokens/{id}`                                                    | Revoke an MCP token                |
+| Method | Endpoint                                               | Description                        |
+| ------ | ------------------------------------------------------ | ---------------------------------- |
+| POST   | `/api/auth/register`                                   | Register a new user                |
+| POST   | `/api/auth/login`                                      | Log in and receive a JWT           |
+| GET    | `/api/collections`                                     | List user's collections            |
+| POST   | `/api/collections`                                     | Create a new collection            |
+| PUT    | `/api/collections/{id}`                                | Update a collection                |
+| DELETE | `/api/collections/{id}`                                | Delete a collection                |
+| GET    | `/api/collections/{collectionId}/grammars`             | List grammar notes in a collection |
+| POST   | `/api/collections/{collectionId}/grammars`             | Create a grammar note              |
+| GET    | `/api/collections/{collectionId}/grammars/{grammarId}` | Get a single grammar note          |
+| PUT    | `/api/collections/{collectionId}/grammars/{grammarId}` | Update a grammar note              |
+| PATCH  | `/api/collections/{collectionId}/grammars/{grammarId}` | Toggle star on a grammar note      |
+| DELETE | `/api/collections/{collectionId}/grammars/{grammarId}` | Delete a grammar note              |
+| POST   | `/api/tokens`                                          | Generate a new MCP token           |
+| GET    | `/api/tokens`                                          | List user's MCP tokens             |
+| PATCH  | `/api/tokens/{id}`                                     | Rename an MCP token                |
+| DELETE | `/api/tokens/{id}`                                     | Revoke an MCP token                |
 
 ### MCP Server
 
@@ -233,18 +235,18 @@ Lobos embeds a remote MCP server (Streamable HTTP) at `/mcp`, letting AI clients
 claude mcp add --transport http lobos http://localhost:8080/mcp -H "Authorization: Bearer <mcp_token>"
 ```
 
-| Tool                    | Description                                  |
-|-------------------------|-----------------------------------------------|
-| `list_collections`      | List the authenticated user's collections     |
-| `create_collection`     | Create a new collection                       |
-| `update_collection`     | Update a collection's name and color          |
-| `delete_collection`     | Delete a collection                           |
-| `list_grammars`         | List grammars within a collection             |
-| `get_grammar`           | Get a single grammar's detail                 |
-| `create_grammar`        | Create a grammar note inside a collection     |
-| `update_grammar`        | Update a grammar note                         |
-| `toggle_star_grammar`   | Toggle star/favorite on a grammar note        |
-| `delete_grammar`        | Delete a grammar note                         |
+| Tool                  | Description                               |
+| --------------------- | ----------------------------------------- |
+| `list_collections`    | List the authenticated user's collections |
+| `create_collection`   | Create a new collection                   |
+| `update_collection`   | Update a collection's name and color      |
+| `delete_collection`   | Delete a collection                       |
+| `list_grammars`       | List grammars within a collection         |
+| `get_grammar`         | Get a single grammar's detail             |
+| `create_grammar`      | Create a grammar note inside a collection |
+| `update_grammar`      | Update a grammar note                     |
+| `toggle_star_grammar` | Toggle star/favorite on a grammar note    |
+| `delete_grammar`      | Delete a grammar note                     |
 
 ---
 
