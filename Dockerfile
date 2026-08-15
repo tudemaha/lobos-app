@@ -1,3 +1,4 @@
+
 FROM --platform=$BUILDPLATFORM maven:3.9.16-eclipse-temurin-21 AS builder
 
 WORKDIR /app
@@ -8,6 +9,7 @@ ENV DB_URL=jdbc:mysql://localhost:3306/lobos
 ENV DB_USERNAME=dummy
 ENV DB_PASSWORD=dummy
 ENV JWT_SECRET=dummy
+ENV REMEMBER_ME_KEY=dummy
 
 COPY src /app/src
 RUN mvn install
@@ -26,3 +28,4 @@ COPY --from=prepare-production ${DEPENDENCY}/BOOT-INF/lib /app/lib
 COPY --from=prepare-production ${DEPENDENCY}/META-INF /app/META-INF
 COPY --from=prepare-production ${DEPENDENCY}/BOOT-INF/classes /app
 ENTRYPOINT ["java", "-cp", "app:app/lib/*", "id.my.tudemaha.lobos.LobosApplication"]
+

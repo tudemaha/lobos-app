@@ -18,7 +18,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -37,10 +39,12 @@ public class AuthController {
 
     private final UserService userService;
     private final SecurityContextRepository securityContextRepository;
+    private final RememberMeServices rememberMeServices;
 
-    public AuthController(UserService userService, SecurityContextRepository securityContextRepository) {
+    public AuthController(UserService userService, SecurityContextRepository securityContextRepository, RememberMeServices rememberMeServices) {
         this.userService = userService;
         this.securityContextRepository = securityContextRepository;
+        this.rememberMeServices = rememberMeServices;
     }
 
     @GetMapping("/")
@@ -102,12 +106,22 @@ public class AuthController {
 
         refreshAuthentication(user, request, response);
 
+        if (userLogin.isRememberMe()) {
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+            rememberMeServices.loginSuccess(request, response, authToken);
+        }
+
         return "redirect:/collections";
     }
 
     @PostMapping("/auth/logout")
-    public String logout(HttpServletRequest request) {
+    public String logout(HttpServletRequest request, HttpServletResponse response) {
+        if (rememberMeServices instanceof LogoutHandler logoutHandler) {
+            logoutHandler.logout(request, response, SecurityContextHolder.getContext().getAuthentication());
+        }
+
         SecurityContextHolder.clearContext();
+
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();

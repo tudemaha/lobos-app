@@ -1,9 +1,11 @@
 package id.my.tudemaha.lobos.config;
 
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
+import id.my.tudemaha.lobos.security.JdbcPersistentTokenRepository;
 import id.my.tudemaha.lobos.security.JwtAuthFilter;
 import id.my.tudemaha.lobos.security.McpAuthFilter;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,10 +16,14 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import tools.jackson.databind.ObjectMapper;
@@ -41,6 +47,9 @@ public class SecurityConfig {
         this.mcpAuthFilter = mcpAuthFilter;
         this.objectMapper = objectMapper;
     }
+
+    @Value("${app.remember-me.key}")
+    private String rememberMeKey;
 
     @Bean
     @Order(1)
@@ -77,7 +86,11 @@ public class SecurityConfig {
 
     @Bean
     @Order(3)
-    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository) {
+    public SecurityFilterChain webSecurityFilterChain(
+            HttpSecurity http,
+            SecurityContextRepository securityContextRepository,
+            RememberMeServices rememberMeServices
+    ) {
         http
                 .csrf(Customizer.withDefaults())
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
@@ -88,6 +101,10 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/webjars/**", "/docs/**", "/manifest.json").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
                         .anyRequest().authenticated()
+                )
+                .rememberMe(rememberMe -> rememberMe
+                        .key(rememberMeKey)
+                        .rememberMeServices(rememberMeServices)
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
@@ -124,5 +141,21 @@ public class SecurityConfig {
         FilterRegistrationBean<McpAuthFilter> registration = new FilterRegistrationBean<>(mcpAuthFilter);
         registration.setEnabled(false);
         return registration;
+    }
+
+    @Bean
+    public RememberMeServices rememberMeServices(
+            UserDetailsService userDetailsService,
+            JdbcPersistentTokenRepository jdbcPersistentTokenRepository
+    ) {
+        PersistentTokenBasedRememberMeServices rememberMeServices = new PersistentTokenBasedRememberMeServices(
+                rememberMeKey,
+                userDetailsService,
+                jdbcPersistentTokenRepository
+        );
+        rememberMeServices.setAlwaysRemember(false);
+        rememberMeServices.setTokenValiditySeconds(2592000);    // 30 days
+        rememberMeServices.setParameter("rememberMe");
+        return rememberMeServices;
     }
 }
