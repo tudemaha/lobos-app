@@ -17,4 +17,7 @@ public class UserLogin {
 
     @NotBlank(message = "Password is required")
     private String password;
+
+    // no validation, only for web
+    private boolean rememberMe;
 }
