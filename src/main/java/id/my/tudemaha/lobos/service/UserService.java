@@ -1,7 +1,7 @@
 package id.my.tudemaha.lobos.service;
 
 import id.my.tudemaha.lobos.dto.request.*;
-import id.my.tudemaha.lobos.dto.response.AccessToken;
+import id.my.tudemaha.lobos.dto.response.Token;
 import id.my.tudemaha.lobos.exception.DuplicateEmailException;
 import id.my.tudemaha.lobos.exception.ForbiddenAccessException;
 import id.my.tudemaha.lobos.exception.LoginException;
@@ -13,6 +13,7 @@ import id.my.tudemaha.lobos.security.JwtService;
 import id.my.tudemaha.lobos.utils.PasswordHasher;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -20,11 +21,18 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
     private final PersistentTokenRepository persistentTokenRepository;
 
-    public UserService(UserRepository userRepository, JwtService jwtService,  PersistentTokenRepository persistentTokenRepository) {
+    public UserService(
+            UserRepository userRepository,
+            JwtService jwtService,
+            RefreshTokenService refreshTokenService,
+            PersistentTokenRepository persistentTokenRepository
+    ) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
         this.persistentTokenRepository = persistentTokenRepository;
     }
 
@@ -44,12 +52,9 @@ public class UserService {
     }
 
     public User authenticate(UserLogin userLogin) {
-        Optional<User> userOpt = userRepository.findByEmail(userLogin.getEmail());
-        if (userOpt.isEmpty()) {
-            throw new LoginException();
-        }
+        User user = userRepository.findByEmail(userLogin.getEmail())
+                .orElseThrow(LoginException::new);
 
-        User user = userOpt.get();
         if (!PasswordHasher.checkPassword(userLogin.getPassword(), user.getPassword())) {
             throw new LoginException();
         }
@@ -57,13 +62,25 @@ public class UserService {
         return user;
     }
 
-    public AccessToken login(UserLogin userLogin) {
+    public Token login(UserLogin userLogin) {
         User user = authenticate(userLogin);
-        String token = jwtService.generateToken(user);
+        String accessToken = jwtService.generateToken(user);
+        String refreshToken = refreshTokenService.generate(user.getId(), "");
 
-        AccessToken accessToken = new AccessToken();
-        accessToken.setToken(token);
-        return accessToken;
+        Token token = new Token();
+        token.setAccessToken(accessToken);
+        token.setRefreshToken(refreshToken);
+        return token;
+    }
+
+    public Token refresh(RefreshRequest refreshRequest) {
+        RefreshTokenService.TokenPair tokenPair = refreshTokenService.rotateRefreshToken(refreshRequest.getRefreshToken());
+        String accessToken = jwtService.generateToken(tokenPair.user());
+
+        Token token = new Token();
+        token.setAccessToken(accessToken);
+        token.setRefreshToken(tokenPair.refreshToken());
+        return token;
     }
 
     public void update(UserUpdate userUpdate, String id) {
@@ -94,13 +111,9 @@ public class UserService {
         userRepository.update(user);
     }
 
+    @Transactional
     public void updatePassword(UpdatePassword updatePassword, String id) {
-        Optional<User> userOpt = userRepository.findById(id);
-        if (userOpt.isEmpty()) {
-            throw new NotFoundException();
-        }
-
-        User user = userOpt.get();
+        User user = userRepository.findById(id).orElseThrow(NotFoundException::new);
         boolean match = PasswordHasher.checkPassword(updatePassword.getOldPassword(), user.getPassword());
         if(!match) {
             throw new ForbiddenAccessException("invalid old password");
@@ -113,16 +126,18 @@ public class UserService {
         String hashedPassword = PasswordHasher.hashPassword(updatePassword.getNewPassword());
         user.setPassword(hashedPassword);
         userRepository.update(user);
-        persistentTokenRepository.removeUserTokens(user.getId());
+        if (updatePassword.isWithLogoutAll()) {
+            persistentTokenRepository.removeUserTokens(user.getId());
+            refreshTokenService.revokeAll(user.getId());
+        }
     }
 
+    @Transactional
     public void delete(String id) {
-        Optional<User> userOpt = userRepository.findById(id);
-        if (userOpt.isEmpty()) {
-            throw new NotFoundException();
-        }
+        User user = userRepository.findById(id).orElseThrow(NotFoundException::new);
 
-        persistentTokenRepository.removeUserTokens(id);
-        userRepository.delete(id);
+        persistentTokenRepository.removeUserTokens(user.getId());
+        refreshTokenService.revokeAll(user.getId());
+        userRepository.delete(user.getId());
     }
 }

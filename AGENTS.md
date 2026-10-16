@@ -63,7 +63,7 @@ src/main/resources/
 ## Backend & Database Conventions
 
 ### 1. Database & Persistence (`JdbcTemplate`)
-- Database DDL schema is defined in `src/main/resources/schema.sql`.
+- Database DDL schema is defined in `src/main/resources/db/migration/V1__baseline.sql`.
 - Persistence relies on raw SQL executed via `JdbcTemplate`. Do not introduce ORM/JPA mappings unless requested.
 - Primary keys are 36-character UUID strings (`VARCHAR(36)`).
 

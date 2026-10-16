@@ -1,9 +1,10 @@
 package id.my.tudemaha.lobos.controller.api;
 
 import id.my.tudemaha.lobos.dto.request.*;
-import id.my.tudemaha.lobos.dto.response.AccessToken;
+import id.my.tudemaha.lobos.dto.response.Token;
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
 import id.my.tudemaha.lobos.model.User;
+import id.my.tudemaha.lobos.service.RefreshTokenService;
 import id.my.tudemaha.lobos.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,9 +19,11 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "User/Auth", description = "User and auth management endpoints")
 public class UserController {
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, RefreshTokenService refreshTokenService) {
         this.userService = userService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/register")
@@ -32,9 +35,30 @@ public class UserController {
 
     @PostMapping("/login")
     @Operation(summary = "Login endpoint")
-    public ResponseEntity<HttpResponse<AccessToken>> login(@Valid @RequestBody UserLogin userLogin) {
-        AccessToken accessToken = userService.login(userLogin);
-        return ResponseEntity.ok(HttpResponse.success("login successfully", accessToken));
+    public ResponseEntity<HttpResponse<Token>> login(@Valid @RequestBody UserLogin userLogin) {
+        Token token = userService.login(userLogin);
+        return ResponseEntity.ok(HttpResponse.success("login successfully", token));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "Generate new access token from refresh token")
+    public ResponseEntity<HttpResponse<Token>> refreshToken(@Valid @RequestBody RefreshRequest refreshRequest) {
+        Token token = userService.refresh(refreshRequest);
+        return ResponseEntity.ok(HttpResponse.success("refresh successfully", token));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Logout from current device")
+    public ResponseEntity<HttpResponse<Void>> logout(@Valid @RequestBody RefreshRequest refreshRequest) {
+        refreshTokenService.revoke(refreshRequest.getRefreshToken());
+        return ResponseEntity.ok(HttpResponse.success("logout successfully", null));
+    }
+
+    @PostMapping("/logout-all")
+    @Operation(summary = "Logout from all device")
+    public ResponseEntity<HttpResponse<Void>> logoutAll(@AuthenticationPrincipal User user) {
+        refreshTokenService.revokeAll(user);
+        return ResponseEntity.ok(HttpResponse.success("logout from all device successfully", null));
     }
 
     @PutMapping("/update")

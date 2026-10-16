@@ -38,7 +38,7 @@ public class McpTokenService {
     private McpToken isTokenEmpty(String id) {
         Optional<McpToken> mcpTokenOpt = mcpTokenRepository.getMcpTokenById(id);
         if (mcpTokenOpt.isEmpty()) {
-            throw new InvalidTokenException();
+            throw new InvalidTokenException("invalid MCP token");
         }
 
         return mcpTokenOpt.get();
@@ -67,13 +67,13 @@ public class McpTokenService {
     public User authenticate(String token) {
         Optional<McpToken> mcpTokenOpt = mcpTokenRepository.getMcpTokenByToken(token);
         if (mcpTokenOpt.isEmpty()) {
-            throw new InvalidTokenException();
+            throw new InvalidTokenException("invalid MCP token");
         }
 
         McpToken mcpToken = mcpTokenOpt.get();
         Optional<User> userOpt = userRepository.findById(mcpToken.getUserId());
         if (userOpt.isEmpty()) {
-            throw new InvalidTokenException();
+            throw new InvalidTokenException("invalid MCP token");
         }
 
         mcpTokenRepository.updateLastUsed(mcpToken);
