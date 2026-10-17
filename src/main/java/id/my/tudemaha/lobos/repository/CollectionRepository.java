@@ -30,19 +30,21 @@ public class CollectionRepository {
             rs.getString("color"),
             rs.getString("user_id"),
             rs.getObject("created_at", LocalDateTime.class),
-            rs.getObject("updated_at", LocalDateTime.class)
+            rs.getObject("updated_at", LocalDateTime.class),
+            rs.getObject("deleted_at", LocalDateTime.class)
     );
 
     public void insert(Collection collection) {
-        String sql = "INSERT INTO collections (name, color, user_id)" +
-                " VALUES (?, ?, ?)";
+        String sql = "INSERT INTO collections (id, name, color, user_id)" +
+                " VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
-            ps.setString(1, collection.getName());
-            ps.setString(2, collection.getColor());
-            ps.setString(3, collection.getUserId());
+            ps.setString(1, collection.getId());
+            ps.setString(2, collection.getName());
+            ps.setString(3, collection.getColor());
+            ps.setString(4, collection.getUserId());
 
             return ps;
         }, keyHolder);
@@ -56,7 +58,7 @@ public class CollectionRepository {
 
         List<Object> params = new ArrayList<>();
 
-        String baseQuery = " FROM collections WHERE user_id = ?";
+        String baseQuery = " FROM collections WHERE user_id = ? AND deleted_at IS NULL";
         params.add(userId);
 
         if (paginationRequest.getQuery() != null && !paginationRequest.getQuery().isBlank()) {
@@ -78,17 +80,17 @@ public class CollectionRepository {
 
 
     public Optional<Collection> findById(String id) {
-        String sql = "SELECT * FROM collections WHERE id = ?";
+        String sql = "SELECT * FROM collections WHERE id = ? AND deleted_at IS NULL";
         return jdbcTemplate.query(sql, collectionRowMapper, id).stream().findFirst();
     }
 
     public void update(Collection collection) {
-        String sql = "UPDATE collections SET name = ?, color = ? WHERE id = ?";
+        String sql = "UPDATE collections SET name = ?, color = ? WHERE id = ? AND deleted_at IS NULL";
         jdbcTemplate.update(sql, collection.getName(), collection.getColor(), collection.getId());
     }
 
     public void delete(String id) {
-        String sql = "DELETE FROM collections WHERE id = ?";
+        String sql = "UPDATE collections SET deleted_at = CURRENT_TIMESTAMP(3) WHERE id = ? AND deleted_at IS NULL";
         jdbcTemplate.update(sql, id);
     }
 }

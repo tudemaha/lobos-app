@@ -33,6 +33,13 @@ public class GlobalExceptionHandler {
                 .body(HttpResponse.error(e.getMessage(), null));
     }
 
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<HttpResponse<Void>> handleDuplicateResource(DuplicateResourceException e) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(HttpResponse.error(e.getMessage(), null));
+    }
+
     @ExceptionHandler(LoginException.class)
     public ResponseEntity<HttpResponse<Void>> handleLoginException(LoginException e) {
         return ResponseEntity

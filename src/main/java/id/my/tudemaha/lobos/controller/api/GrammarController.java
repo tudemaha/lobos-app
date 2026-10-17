@@ -3,6 +3,7 @@ package id.my.tudemaha.lobos.controller.api;
 import id.my.tudemaha.lobos.dto.request.CreateGrammar;
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
 import id.my.tudemaha.lobos.dto.request.UpdateGrammar;
+import id.my.tudemaha.lobos.dto.response.GrammarData;
 import id.my.tudemaha.lobos.dto.response.GrammarDetail;
 import id.my.tudemaha.lobos.dto.response.GrammarList;
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
@@ -28,15 +29,15 @@ public class GrammarController {
 
     @PostMapping
     @Operation(summary = "Create a new grammar")
-    public ResponseEntity<HttpResponse<Void>> create(
+    public ResponseEntity<HttpResponse<GrammarDetail>> create(
             @Valid @RequestBody CreateGrammar createGrammar,
             @AuthenticationPrincipal User user,
             @PathVariable String collectionId
     ) {
-        grammarService.createGrammar(createGrammar, collectionId, user.getId());
+        GrammarDetail grammarDetail = grammarService.createGrammar(createGrammar, collectionId, user.getId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(HttpResponse.success("grammar created successfully", null));
+                .body(HttpResponse.success("grammar created successfully", grammarDetail));
     }
 
     @GetMapping

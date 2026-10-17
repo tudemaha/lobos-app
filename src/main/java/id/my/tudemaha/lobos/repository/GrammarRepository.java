@@ -32,28 +32,27 @@ public class GrammarRepository {
             rs.getBoolean("is_starred"),
             rs.getString("collection_id"),
             rs.getObject("created_at", LocalDateTime.class),
-            rs.getObject("updated_at", LocalDateTime.class)
+            rs.getObject("updated_at", LocalDateTime.class),
+            rs.getObject("deleted_at", LocalDateTime.class)
     );
 
-    public void insert(Grammar grammar) {
-        String sql = "INSERT INTO grammars (word, meaning, example, collection_id)"+
-                " VALUES (?, ?, ?, ?)";
+    public Grammar insert(Grammar grammar) {
+        String sql = "INSERT INTO grammars (id, word, meaning, example, collection_id)"+
+                " VALUES (?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
-            ps.setString(1, grammar.getWord());
-            ps.setString(2, grammar.getMeaning());
-            ps.setString(4, grammar.getCollectionId());
-
-            if(grammar.getExample() != null) {
-                ps.setString(3, grammar.getExample());
-            } else{
-                ps.setNull(3, Types.VARCHAR);
-            }
+            ps.setString(1, grammar.getId());
+            ps.setString(2, grammar.getWord());
+            ps.setString(3, grammar.getMeaning());
+            ps.setString(4, grammar.getExample());
+            ps.setString(5, grammar.getCollectionId());
 
             return ps;
         }, keyHolder);
+
+        return grammar;
     }
 
     public record PaginatedGrammar(List<Grammar> grammars, int totalCount) {}
@@ -64,7 +63,7 @@ public class GrammarRepository {
 
         List<Object> params = new ArrayList<>();
 
-        String baseQuery = " FROM grammars WHERE collection_id = ?";
+        String baseQuery = " FROM grammars WHERE collection_id = ? AND deleted_at IS NULL";
         params.add(collectionId);
 
         if (paginationRequest.getQuery() != null && !paginationRequest.getQuery().isBlank()) {
@@ -86,7 +85,7 @@ public class GrammarRepository {
     }
 
     public Optional<Grammar> findById(String id) {
-        String sql = "SELECT * FROM grammars WHERE id = ?";
+        String sql = "SELECT * FROM grammars WHERE id = ? AND deleted_at IS NULL";
         return jdbcTemplate.query(sql, grammarRowMapper, id).stream().findFirst();
     }
 
@@ -97,12 +96,12 @@ public class GrammarRepository {
         }
 
         Grammar grammar = grammarOpt.get();
-        String sql = "UPDATE grammars SET is_starred = ? WHERE id = ?";
+        String sql = "UPDATE grammars SET is_starred = ? WHERE id = ? AND deleted_at IS NULL";
         jdbcTemplate.update(sql, !grammar.isStarred(), grammar.getId());
     }
 
     public void update(Grammar grammar) {
-        String sql = "UPDATE grammars SET word = ?, meaning = ?, example = ? WHERE id = ?";
+        String sql = "UPDATE grammars SET word = ?, meaning = ?, example = ? WHERE id = ? AND deleted_at IS NULL";
         Object[] params = new Object[] {
             grammar.getWord(),
             grammar.getMeaning(),
@@ -119,7 +118,12 @@ public class GrammarRepository {
     }
 
     public void delete(String id) {
-        String sql = "DELETE FROM grammars WHERE id = ?";
+        String sql = "UPDATE grammars SET deleted_at = CURRENT_TIMESTAMP(3) WHERE id = ? AND deleted_at IS NULL";
         jdbcTemplate.update(sql, id);
+    }
+
+    public void deleteAllByCollectionId(String collectionId) {
+        String sql = "UPDATE grammars SET deleted_at = CURRENT_TIMESTAMP(3) WHERE collection_id = ? AND deleted_at IS NULL";
+        jdbcTemplate.update(sql, collectionId);
     }
 }

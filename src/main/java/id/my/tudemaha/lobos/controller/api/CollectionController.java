@@ -2,6 +2,7 @@ package id.my.tudemaha.lobos.controller.api;
 
 import id.my.tudemaha.lobos.dto.request.CreateCollection;
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
+import id.my.tudemaha.lobos.dto.response.CollectionData;
 import id.my.tudemaha.lobos.dto.response.CollectionList;
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
 import id.my.tudemaha.lobos.model.User;
@@ -26,14 +27,14 @@ public class CollectionController {
 
     @PostMapping
     @Operation(summary = "Create a new collection")
-    public ResponseEntity<HttpResponse<Void>> createCollection(
+    public ResponseEntity<HttpResponse<CollectionData>> createCollection(
             @Valid @RequestBody CreateCollection createCollection,
             @AuthenticationPrincipal User user
             ) {
-        collectionService.createCollection(createCollection, user.getId());
+        CollectionData collectionData = collectionService.createCollection(createCollection, user.getId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(HttpResponse.success("collection created successfully", null));
+                .body(HttpResponse.success("collection created successfully", collectionData));
     }
 
     @GetMapping

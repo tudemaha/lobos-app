@@ -8,6 +8,7 @@ import id.my.tudemaha.lobos.model.Grammar;
 public class GrammarMapper {
     public static Grammar toEntity(CreateGrammar request) {
         Grammar grammar = new Grammar();
+        grammar.setId(request.getId());
         grammar.setWord(request.getWord());
         grammar.setMeaning(request.getMeaning());
         grammar.setExample(request.getExample());
