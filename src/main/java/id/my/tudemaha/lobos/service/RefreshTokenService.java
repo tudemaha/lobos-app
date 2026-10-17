@@ -91,7 +91,7 @@ public class RefreshTokenService {
         refreshTokenRepository.revokeAllByUserId(userId);
     }
 
-    @Scheduled(cron = "0 0  3 * * *")
+    @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     public void cleanupExpiredTokens() {
         log.info("Starting scheduled cleanup of expired refresh tokens");

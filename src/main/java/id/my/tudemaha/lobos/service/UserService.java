@@ -11,16 +11,20 @@ import id.my.tudemaha.lobos.repository.UserRepository;
 import id.my.tudemaha.lobos.security.JwtService;
 import id.my.tudemaha.lobos.utils.Hasher;
 import id.my.tudemaha.lobos.utils.TokenUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class UserService {
     private final UserRepository userRepository;
@@ -111,6 +115,23 @@ public class UserService {
                         .orElseThrow(() -> new InvalidTokenException("invalid or expired verification token"));
         user.setEmailVerifiedAt(LocalDateTime.now());
 
+        if ("CHANGE_EMAIL".equals(emailVerificationToken.getPurpose())) {
+            if (user.getPendingEmail() == null) {
+                throw new InvalidTokenException("No pending email change found");
+            }
+            
+            userRepository
+                .findByEmail(user.getPendingEmail())
+                .ifPresent(checkUser -> {
+                    throw new DuplicateEmailException(user.getPendingEmail());
+                });
+
+            user.setEmail(user.getPendingEmail());
+            user.setPendingEmail(null);
+            persistentTokenRepository.removeUserTokens(user.getId());
+            refreshTokenService.revokeAll(emailVerificationToken.getUserId());
+        }
+
         userRepository.update(user);
         emailVerificationTokenRepository.markAsUsed(emailVerificationToken.getId());
     }
@@ -147,6 +168,7 @@ public class UserService {
         userRepository.update(user);
     }
 
+    @Transactional
     public void updateEmail(UpdateEmail updateEmail, String id) {
         Optional<User> userOpt = userRepository.findByEmail(updateEmail.getEmail());
         if (userOpt.isPresent()) {
@@ -159,8 +181,10 @@ public class UserService {
         }
 
         User user = userOpt.get();
-        user.setEmail(updateEmail.getEmail());
+        user.setPendingEmail(updateEmail.getEmail());
         userRepository.update(user);
+        String rawToken = generateAndSaveToken(user.getId(), "CHANGE_EMAIL");
+        emailService.sendEmail(user.getPendingEmail(), "CHANGE_EMAIL", user.getFirstName(), rawToken);
     }
 
     @Transactional
@@ -191,6 +215,14 @@ public class UserService {
         persistentTokenRepository.removeUserTokens(user.getId());
         refreshTokenService.revokeAll(user.getId());
         userRepository.delete(user.getId());
+    }
+
+    @Scheduled(cron = "0 0 3 * * *")
+    @Transactional
+    public void cleanupExpiredTokens() {
+        log.info("Starting scheduled cleanup of expired verification tokens");
+        int deleteCount = emailVerificationTokenRepository.deleteExpiredTokens();
+        log.info("Finished cleanup: deleted {} expired verification tokens", deleteCount);
     }
 
     private String generateAndSaveToken(String userId, String purpose) {
