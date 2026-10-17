@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -119,7 +118,7 @@ public class UserService {
             if (user.getPendingEmail() == null) {
                 throw new InvalidTokenException("No pending email change found");
             }
-            
+
             userRepository
                 .findByEmail(user.getPendingEmail())
                 .ifPresent(checkUser -> {
@@ -154,6 +153,10 @@ public class UserService {
         token.setAccessToken(accessToken);
         token.setRefreshToken(tokenPair.refreshToken());
         return token;
+    }
+
+    public User findById(String id) {
+        return userRepository.findById(id).orElseThrow(NotFoundException::new);
     }
 
     public void update(UserUpdate userUpdate, String id) {

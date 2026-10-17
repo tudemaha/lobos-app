@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{layout :: layout(~{::title}, ~{::head-extra}, ~{::main-content}, ~{::scripts})}">
 
 <title>Email Verification — Lobos</title>
@@ -38,7 +39,10 @@
 
         <!-- Action: If Success -->
         <div th:if="${success}" class="mt-6">
-            <a th:href="@{/login}" class="btn-primary w-full inline-block text-center font-medium">
+            <a sec:authorize="isAuthenticated()" th:href="@{/profile}" class="btn-primary w-full inline-block text-center font-medium">
+                Back to Profile &amp; Settings
+            </a>
+            <a sec:authorize="!isAuthenticated()" th:href="@{/login}" class="btn-primary w-full inline-block text-center font-medium">
                 Sign In to Your Account
             </a>
         </div>

@@ -116,6 +116,9 @@ public class AuthController {
     @GetMapping("/verify-email")
     public String verifyEmailWeb(
             @RequestParam(value = "t", required = false) String t,
+            @AuthenticationPrincipal User loggedInUser,
+            HttpServletRequest request,
+            HttpServletResponse response,
             Model model
     ) {
         if (t == null || t.isBlank()) {
@@ -126,8 +129,12 @@ public class AuthController {
 
         try {
             userService.verifyEmail(t);
+            if (loggedInUser != null) {
+                User freshUser = userService.findById(loggedInUser.getId());
+                refreshAuthentication(freshUser, request, response);
+            }
             model.addAttribute("success", true);
-            model.addAttribute("message", "Your email has been verified successfully! You can now sign in to your account.");
+            model.addAttribute("message", "Your email has been verified successfully!");
         } catch (Exception e) {
             model.addAttribute("success", false);
             model.addAttribute("message", "The verification link is invalid, has expired, or has already been used.");
@@ -161,9 +168,18 @@ public class AuthController {
     }
 
     @GetMapping("/profile")
-    public String profilePage(@AuthenticationPrincipal User user, Model model) {
-        model.addAttribute("userUpdate", toUserUpdate(user));
-        model.addAttribute("updateEmail", toUpdateEmail(user));
+    public String profilePage(
+            @AuthenticationPrincipal User user,
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Model model
+    ) {
+        User freshUser = userService.findById(user.getId());
+        refreshAuthentication(freshUser, request, response);
+
+        model.addAttribute("currentUser", freshUser);
+        model.addAttribute("userUpdate", toUserUpdate(freshUser));
+        model.addAttribute("updateEmail", new UpdateEmail());
         model.addAttribute("updatePassword", new UpdatePassword());
         return "auth/profile";
     }
@@ -178,16 +194,17 @@ public class AuthController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("updateEmail", toUpdateEmail(user));
+            User freshUser = userService.findById(user.getId());
+            model.addAttribute("currentUser", freshUser);
+            model.addAttribute("updateEmail", new UpdateEmail());
             model.addAttribute("updatePassword", new UpdatePassword());
             return "auth/profile";
         }
 
         userService.update(userUpdate, user.getId());
 
-        user.setFirstName(userUpdate.getFirstName());
-        user.setLastName(userUpdate.getLastName());
-        refreshAuthentication(user, request, response);
+        User freshUser = userService.findById(user.getId());
+        refreshAuthentication(freshUser, request, response);
 
         return "redirect:/profile?updated";
     }
@@ -202,7 +219,9 @@ public class AuthController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("userUpdate", toUserUpdate(user));
+            User freshUser = userService.findById(user.getId());
+            model.addAttribute("currentUser", freshUser);
+            model.addAttribute("userUpdate", toUserUpdate(freshUser));
             model.addAttribute("updatePassword", new UpdatePassword());
             return "auth/profile";
         }
@@ -211,15 +230,17 @@ public class AuthController {
             userService.updateEmail(updateEmail, user.getId());
         } catch (DuplicateEmailException e) {
             bindingResult.addError(new FieldError("updateEmail", "email", e.getMessage()));
-            model.addAttribute("userUpdate", toUserUpdate(user));
+            User freshUser = userService.findById(user.getId());
+            model.addAttribute("currentUser", freshUser);
+            model.addAttribute("userUpdate", toUserUpdate(freshUser));
             model.addAttribute("updatePassword", new UpdatePassword());
             return "auth/profile";
         }
 
-        user.setEmail(updateEmail.getEmail());
-        refreshAuthentication(user, request, response);
+        User freshUser = userService.findById(user.getId());
+        refreshAuthentication(freshUser, request, response);
 
-        return "redirect:/profile?updated";
+        return "redirect:/profile?emailPending";
     }
 
     @PatchMapping("/auth/password")
@@ -230,8 +251,10 @@ public class AuthController {
             Model model
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("userUpdate", toUserUpdate(user));
-            model.addAttribute("updateEmail", toUpdateEmail(user));
+            User freshUser = userService.findById(user.getId());
+            model.addAttribute("currentUser", freshUser);
+            model.addAttribute("userUpdate", toUserUpdate(freshUser));
+            model.addAttribute("updateEmail", new UpdateEmail());
             return "auth/profile";
         }
 
@@ -239,13 +262,17 @@ public class AuthController {
             userService.updatePassword(updatePassword, user.getId());
         } catch (ForbiddenAccessException e) {
             bindingResult.addError(new FieldError("updatePassword", "oldPassword", e.getMessage()));
-            model.addAttribute("userUpdate", toUserUpdate(user));
-            model.addAttribute("updateEmail", toUpdateEmail(user));
+            User freshUser = userService.findById(user.getId());
+            model.addAttribute("currentUser", freshUser);
+            model.addAttribute("userUpdate", toUserUpdate(freshUser));
+            model.addAttribute("updateEmail", new UpdateEmail());
             return "auth/profile";
         } catch (IllegalArgumentException e) {
             bindingResult.addError(new FieldError("updatePassword", "confirmNewPassword", e.getMessage()));
-            model.addAttribute("userUpdate", toUserUpdate(user));
-            model.addAttribute("updateEmail", toUpdateEmail(user));
+            User freshUser = userService.findById(user.getId());
+            model.addAttribute("currentUser", freshUser);
+            model.addAttribute("userUpdate", toUserUpdate(freshUser));
+            model.addAttribute("updateEmail", new UpdateEmail());
             return "auth/profile";
         }
 
@@ -281,11 +308,5 @@ public class AuthController {
         userUpdate.setFirstName(user.getFirstName());
         userUpdate.setLastName(user.getLastName());
         return userUpdate;
-    }
-
-    private UpdateEmail toUpdateEmail(User user) {
-        UpdateEmail updateEmail = new UpdateEmail();
-        updateEmail.setEmail(user.getEmail());
-        return updateEmail;
     }
 }
