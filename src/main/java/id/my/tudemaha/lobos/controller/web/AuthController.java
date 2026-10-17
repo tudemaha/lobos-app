@@ -6,6 +6,7 @@ import id.my.tudemaha.lobos.dto.request.UserLogin;
 import id.my.tudemaha.lobos.dto.request.UserRegister;
 import id.my.tudemaha.lobos.dto.request.UserUpdate;
 import id.my.tudemaha.lobos.exception.DuplicateEmailException;
+import id.my.tudemaha.lobos.exception.EmailNotVerifiedException;
 import id.my.tudemaha.lobos.exception.ForbiddenAccessException;
 import id.my.tudemaha.lobos.exception.LoginException;
 import id.my.tudemaha.lobos.model.User;
@@ -26,11 +27,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 
@@ -100,6 +97,8 @@ public class AuthController {
         User user;
         try {
             user = userService.authenticate(userLogin);
+        } catch(EmailNotVerifiedException e) {
+            return "redirect:/login?unverified&email=" + userLogin.getEmail();
         } catch(LoginException e) {
             return "redirect:/login?error";
         }
@@ -112,6 +111,37 @@ public class AuthController {
         }
 
         return "redirect:/collections";
+    }
+
+    @GetMapping("/verify-email")
+    public String verifyEmailWeb(
+            @RequestParam(value = "t", required = false) String t,
+            Model model
+    ) {
+        if (t == null || t.isBlank()) {
+            model.addAttribute("success", false);
+            model.addAttribute("message", "Verification token is missing.");
+            return "auth/verify-email";
+        }
+
+        try {
+            userService.verifyEmail(t);
+            model.addAttribute("success", true);
+            model.addAttribute("message", "Your email has been verified successfully! You can now sign in to your account.");
+        } catch (Exception e) {
+            model.addAttribute("success", false);
+            model.addAttribute("message", "The verification link is invalid, has expired, or has already been used.");
+        }
+
+        return "auth/verify-email";
+    }
+
+    @PostMapping("/auth/resend-verification")
+    public String resendVerificationWeb(@RequestParam("email") String email) {
+        if (email != null && !email.isBlank()) {
+            userService.resendEmailVerification(email);
+        }
+        return "redirect:/login?resent";
     }
 
     @PostMapping("/auth/logout")
