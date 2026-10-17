@@ -19,8 +19,10 @@ public class User implements UserDetails {
     private String firstName;
     private String lastName;
     private String email;
+    private String pendingEmail;
     @ToString.Exclude
     private String password;
+    private LocalDateTime emailVerifiedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

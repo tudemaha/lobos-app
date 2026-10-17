@@ -40,6 +40,20 @@ public class UserController {
         return ResponseEntity.ok(HttpResponse.success("login successfully", token));
     }
 
+    @PostMapping("/verify-email")
+    @Operation(summary = "Verify new created account or email changes")
+    public ResponseEntity<HttpResponse<Void>> verifyEmail(@RequestParam String t) {
+        userService.verifyEmail(t);
+        return ResponseEntity.ok(HttpResponse.success("email verified successfully", null));
+    }
+
+    @PostMapping("/resend-verification")
+    @Operation(summary = "Resend email verification")
+    public ResponseEntity<HttpResponse<Void>> resendVerification(@Valid @RequestBody UpdateEmail email) {
+        userService.resendEmailVerification(email.getEmail());
+        return ResponseEntity.ok(HttpResponse.success("email verification resent successfully", null));
+    }
+
     @PostMapping("/refresh")
     @Operation(summary = "Generate new access token from refresh token")
     public ResponseEntity<HttpResponse<Token>> refreshToken(@Valid @RequestBody RefreshRequest refreshRequest) {

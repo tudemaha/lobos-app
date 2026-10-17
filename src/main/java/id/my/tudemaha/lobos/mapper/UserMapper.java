@@ -2,7 +2,7 @@ package id.my.tudemaha.lobos.mapper;
 
 import id.my.tudemaha.lobos.dto.request.UserRegister;
 import id.my.tudemaha.lobos.model.User;
-import id.my.tudemaha.lobos.utils.PasswordHasher;
+import id.my.tudemaha.lobos.utils.Hasher;
 
 public class UserMapper {
     public static User toEntity(UserRegister request) {
@@ -11,7 +11,7 @@ public class UserMapper {
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
 
-        String hashedPassword = PasswordHasher.hashPassword(request.getPassword());
+        String hashedPassword = Hasher.hashPassword(request.getPassword());
         user.setPassword(hashedPassword);
 
         return user;

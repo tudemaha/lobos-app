@@ -25,7 +25,9 @@ public class UserRepository {
             rs.getString("first_name"),
             rs.getString("last_name"),
             rs.getString("email"),
+            rs.getString("pending_email"),
             rs.getString("password"),
+            rs.getObject("email_verified_at", LocalDateTime.class),
             rs.getObject("created_at", LocalDateTime.class),
             rs.getObject("updated_at", LocalDateTime.class)
     );
@@ -46,28 +48,31 @@ public class UserRepository {
     }
 
     public void save(User user) {
-        String sql = "INSERT INTO users (first_name, last_name, email, password)" +
-                " VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO users (id, first_name, last_name, email, password)" +
+                " VALUES (?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
-            ps.setString(1, user.getFirstName());
-            ps.setString(2, user.getLastName());
-            ps.setString(3, user.getEmail());
-            ps.setString(4, user.getPassword());
+            ps.setString(1, user.getId());
+            ps.setString(2, user.getFirstName());
+            ps.setString(3, user.getLastName());
+            ps.setString(4, user.getEmail());
+            ps.setString(5, user.getPassword());
 
             return ps;
         }, keyHolder);
     }
 
     public void update(User user) {
-        String sql = "UPDATE users SET first_name = ?, last_name = ?, email = ?, password = ? WHERE id = ?";
+        String sql = "UPDATE users SET first_name = ?, last_name = ?, email = ?, password = ?, email_verified_at = ?, pending_email = ? WHERE id = ?";
         jdbcTemplate.update(sql,
                 user.getFirstName(),
                 user.getLastName(),
                 user.getEmail(),
                 user.getPassword(),
+                user.getEmailVerifiedAt(),
+                user.getPendingEmail(),
                 user.getId()
         );
     }

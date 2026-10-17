@@ -5,7 +5,8 @@ import id.my.tudemaha.lobos.model.RefreshToken;
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.repository.RefreshTokenRepository;
 import id.my.tudemaha.lobos.repository.UserRepository;
-import id.my.tudemaha.lobos.utils.TokenHasher;
+import id.my.tudemaha.lobos.utils.Hasher;
+import id.my.tudemaha.lobos.utils.TokenUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -45,7 +46,7 @@ public class RefreshTokenService {
 
     @Transactional
     public TokenPair rotateRefreshToken(String rawOldToken) {
-        String tokenHash = TokenHasher.hashToken(rawOldToken);
+        String tokenHash = Hasher.hashToken(rawOldToken);
 
         RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new InvalidTokenException("invalid refresh token"));
@@ -77,7 +78,7 @@ public class RefreshTokenService {
     }
 
     public void revoke(String rawRefreshToken) {
-        String tokenHash = TokenHasher.hashToken(rawRefreshToken);
+        String tokenHash = Hasher.hashToken(rawRefreshToken);
         refreshTokenRepository.findByTokenHash(tokenHash).ifPresent(token -> {
             refreshTokenRepository.revokeFamily(token.getFamilyId());
         });
@@ -99,10 +100,8 @@ public class RefreshTokenService {
     }
 
     private String generateAndSaveToken(String userId, String familyId, String deviceName) {
-        byte[] randomBytes = new byte[32];
-        secureRandom.nextBytes(randomBytes);
-        String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
-        String tokenHash = TokenHasher.hashToken(rawToken);
+        String rawToken = TokenUtil.generate(32);
+        String tokenHash = Hasher.hashToken(rawToken);
 
         LocalDateTime expiresAt = LocalDateTime.now().plus(refreshTtl);
         RefreshToken refreshToken = new RefreshToken(
