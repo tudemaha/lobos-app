@@ -5,6 +5,7 @@ import id.my.tudemaha.lobos.security.JdbcPersistentTokenRepository;
 import id.my.tudemaha.lobos.security.JwtAuthFilter;
 import id.my.tudemaha.lobos.security.McpAuthFilter;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -28,8 +29,6 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -38,11 +37,7 @@ public class SecurityConfig {
     private final McpAuthFilter mcpAuthFilter;
     private final ObjectMapper objectMapper;
 
-    public SecurityConfig(
-            JwtAuthFilter jwtAuthFilter,
-            McpAuthFilter mcpAuthFilter,
-            ObjectMapper objectMapper
-    ) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, McpAuthFilter mcpAuthFilter, ObjectMapper objectMapper) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.mcpAuthFilter = mcpAuthFilter;
         this.objectMapper = objectMapper;
@@ -56,14 +51,11 @@ public class SecurityConfig {
     public SecurityFilterChain apiSecurityFilterChain(
             HttpSecurity http,
             AuthenticationEntryPoint restAuthenticationEntryPoint,
-            AccessDeniedHandler restAccessDeniedHandler
-    ) {
-        http
-                .securityMatcher("/api/**")
+            AccessDeniedHandler restAccessDeniedHandler) {
+        http.securityMatcher("/api/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
+                .authorizeHttpRequests(auth -> auth.requestMatchers(
                                 "/api/auth/register",
                                 "/api/auth/login",
                                 "/api/auth/refresh",
@@ -71,28 +63,28 @@ public class SecurityConfig {
                                 "/api/auth/verify-email",
                                 "/api/auth/resend-verification",
                                 "/api/auth/forgot-password",
-                                "/api/auth/reset-password"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
+                                "/api/auth/reset-password")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(restAuthenticationEntryPoint)
-                        .accessDeniedHandler(restAccessDeniedHandler)
-                );
+                        .accessDeniedHandler(restAccessDeniedHandler));
 
         return http.build();
     }
 
     @Bean
     @Order(2)
-    public SecurityFilterChain mcpSecurityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository) {
-        http
-                .securityMatcher("/mcp/**")
+    public SecurityFilterChain mcpSecurityFilterChain(
+            HttpSecurity http, SecurityContextRepository securityContextRepository) {
+        http.securityMatcher("/mcp/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(restAuthenticationEntryPoint(objectMapper)))
+                .exceptionHandling(
+                        exception -> exception.authenticationEntryPoint(restAuthenticationEntryPoint(objectMapper)))
                 .addFilterBefore(mcpAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -103,26 +95,43 @@ public class SecurityConfig {
     public SecurityFilterChain webSecurityFilterChain(
             HttpSecurity http,
             SecurityContextRepository securityContextRepository,
-            RememberMeServices rememberMeServices
-    ) {
-        http
-                .csrf(Customizer.withDefaults())
+            RememberMeServices rememberMeServices) {
+        http.csrf(Customizer.withDefaults())
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/register", "/login", "/error", "/verify-email", "/forgot-password", "/reset-password").permitAll()
-                        .requestMatchers("/auth/register", "/auth/login", "/auth/logout", "/auth/resend-verification", "/auth/forgot-password", "/auth/reset-password").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/webjars/**", "/docs/**", "/manifest.json").permitAll()
-                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .rememberMe(rememberMe -> rememberMe
-                        .key(rememberMeKey)
-                        .rememberMeServices(rememberMeServices)
-                )
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
-                );
+                .authorizeHttpRequests(auth -> auth.requestMatchers(
+                                "/",
+                                "/register",
+                                "/login",
+                                "/error",
+                                "/verify-email",
+                                "/forgot-password",
+                                "/reset-password")
+                        .permitAll()
+                        .requestMatchers(
+                                "/auth/register",
+                                "/auth/login",
+                                "/auth/logout",
+                                "/auth/resend-verification",
+                                "/auth/forgot-password",
+                                "/auth/reset-password")
+                        .permitAll()
+                        .requestMatchers(
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/fonts/**",
+                                "/webjars/**",
+                                "/docs/**",
+                                "/manifest.json")
+                        .permitAll()
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
+                .rememberMe(rememberMe -> rememberMe.key(rememberMeKey).rememberMeServices(rememberMeServices))
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")));
 
         return http.build();
     }
@@ -141,9 +150,8 @@ public class SecurityConfig {
             String authError = (String) request.getAttribute("auth_error");
             String message = (authError != null) ? authError : "authentication required";
 
-            response.getWriter().write(objectMapper.writeValueAsString(
-                    HttpResponse.error("UNAUTHORIZED", List.of(message))
-            ));
+            response.getWriter()
+                    .write(objectMapper.writeValueAsString(HttpResponse.error("UNAUTHORIZED", List.of(message))));
         };
     }
 
@@ -153,9 +161,8 @@ public class SecurityConfig {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-            response.getWriter().write(objectMapper.writeValueAsString(
-                    HttpResponse.error("FORBIDDEN", List.of("access denied"))
-            ));
+            response.getWriter()
+                    .write(objectMapper.writeValueAsString(HttpResponse.error("FORBIDDEN", List.of("access denied"))));
         };
     }
 
@@ -175,16 +182,11 @@ public class SecurityConfig {
 
     @Bean
     public RememberMeServices rememberMeServices(
-            UserDetailsService userDetailsService,
-            JdbcPersistentTokenRepository jdbcPersistentTokenRepository
-    ) {
+            UserDetailsService userDetailsService, JdbcPersistentTokenRepository jdbcPersistentTokenRepository) {
         PersistentTokenBasedRememberMeServices rememberMeServices = new PersistentTokenBasedRememberMeServices(
-                rememberMeKey,
-                userDetailsService,
-                jdbcPersistentTokenRepository
-        );
+                rememberMeKey, userDetailsService, jdbcPersistentTokenRepository);
         rememberMeServices.setAlwaysRemember(false);
-        rememberMeServices.setTokenValiditySeconds(2592000);    // 30 days
+        rememberMeServices.setTokenValiditySeconds(2592000); // 30 days
         rememberMeServices.setParameter("rememberMe");
         return rememberMeServices;
     }

@@ -32,12 +32,9 @@ public class GrammarController {
     public ResponseEntity<HttpResponse<GrammarDetail>> create(
             @Valid @RequestBody CreateGrammar createGrammar,
             @AuthenticationPrincipal User user,
-            @PathVariable String collectionId
-    ) {
+            @PathVariable String collectionId) {
         GrammarDetail grammarDetail = grammarService.createGrammar(createGrammar, collectionId, user.getId());
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(HttpResponse.success(grammarDetail));
+        return ResponseEntity.status(HttpStatus.CREATED).body(HttpResponse.success(grammarDetail));
     }
 
     @GetMapping
@@ -45,13 +42,9 @@ public class GrammarController {
     public ResponseEntity<HttpResponse<GrammarList>> getAllGrammars(
             @AuthenticationPrincipal User user,
             @PathVariable String collectionId,
-            @ModelAttribute PaginationRequest paginationRequest
-            ) {
-        GrammarList grammarList = grammarService.getGrammarsByCollectionId(
-                collectionId,
-                user.getId(),
-                paginationRequest
-        );
+            @ModelAttribute PaginationRequest paginationRequest) {
+        GrammarList grammarList =
+                grammarService.getGrammarsByCollectionId(collectionId, user.getId(), paginationRequest);
 
         return ResponseEntity.ok(HttpResponse.success(grammarList));
     }
@@ -59,10 +52,7 @@ public class GrammarController {
     @GetMapping("/{grammarId}")
     @Operation(summary = "Get a grammar details")
     public ResponseEntity<HttpResponse<GrammarDetail>> getGrammar(
-            @PathVariable String collectionId,
-            @PathVariable String grammarId,
-            @AuthenticationPrincipal User user
-    ) {
+            @PathVariable String collectionId, @PathVariable String grammarId, @AuthenticationPrincipal User user) {
         GrammarDetail grammarDetail = grammarService.getGrammarById(grammarId, collectionId, user.getId());
         return ResponseEntity.ok(HttpResponse.success(grammarDetail));
     }
@@ -73,8 +63,7 @@ public class GrammarController {
             @PathVariable String collectionId,
             @PathVariable String grammarId,
             @Valid @RequestBody UpdateGrammar updateGrammar,
-            @AuthenticationPrincipal User user
-    ) {
+            @AuthenticationPrincipal User user) {
         grammarService.update(updateGrammar, grammarId, collectionId, user.getId());
         return ResponseEntity.ok(HttpResponse.success());
     }
@@ -85,8 +74,7 @@ public class GrammarController {
             @PathVariable String collectionId,
             @PathVariable String grammarId,
             @RequestBody StarGrammar starGrammar,
-            @AuthenticationPrincipal User user
-    ) {
+            @AuthenticationPrincipal User user) {
         grammarService.toggleStarred(grammarId, collectionId, user.getId(), starGrammar);
         return ResponseEntity.ok(HttpResponse.success());
     }
@@ -94,10 +82,7 @@ public class GrammarController {
     @DeleteMapping("/{grammarId}")
     @Operation(summary = "Delete a grammar")
     public ResponseEntity<HttpResponse<Void>> deleteGrammar(
-            @PathVariable String collectionId,
-            @PathVariable String grammarId,
-            @AuthenticationPrincipal User user
-    ) {
+            @PathVariable String collectionId, @PathVariable String grammarId, @AuthenticationPrincipal User user) {
         grammarService.delete(grammarId, collectionId, user.getId());
         return ResponseEntity.ok(HttpResponse.success());
     }

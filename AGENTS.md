@@ -21,28 +21,28 @@ Lobos is a Spring Boot application featuring a REST API and a Thymeleaf web inte
 
 ```
 src/main/java/id/my/tudemaha/lobos/
-├── config/             # Security & Application configuration (SecurityConfig)
+├── config/             # Security & Application configuration (SecurityConfig, OpenApiConfig)
 ├── controller/
-│   ├── api/            # REST Controllers (@RestController for JSON APIs)
-│   ├── web/            # MVC Web Controllers (@Controller for Thymeleaf views)
-│   └── mcp/            # MCP Tools (@McpTool components exposed over the MCP server, CollectionMcpTools, GrammarMcpTools)
+│   ├── api/            # REST Controllers (@RestController: AuthController, ProfileController, CollectionController, GrammarController, McpTokenController, SyncController)
+│   ├── web/            # MVC Web Controllers (@Controller: WebAuthController, WebProfileController, WebCollectionController, WebGrammarController, WebMcpTokenController)
+│   └── mcp/            # MCP Tools (@McpTool components: CollectionMcpTools, GrammarMcpTools)
 ├── dto/                # Request & Response DTOs (request/, response/)
 ├── exception/          # Custom exceptions & GlobalExceptionHandler
 ├── mapper/             # Object mappers between entities and DTOs
-├── model/              # Domain models (User, Collection, Grammar, McpToken)
-├── repository/         # Data access using JdbcTemplate (UserRepository, CollectionRepository, GrammarRepository, McpTokenRepository)
-├── security/           # JWT & MCP authentication filters and token utilities (JwtAuthFilter, JwtService, McpAuthFilter); remember-me support (AppUserDetailsService, JdbcPersistentTokenRepository)
-├── service/            # Business logic (UserService, CollectionService, GrammarService, McpTokenService)
-└── utils/              # Common utilities (Pagination, PasswordHasher)
+├── model/              # Domain models (User, Collection, Grammar, McpToken, RefreshToken, EmailVerificationToken)
+├── repository/         # Data access using JdbcTemplate
+├── security/           # JWT & MCP authentication filters and token utilities (JwtAuthFilter, JwtService, McpAuthFilter, AppUserDetailsService, JdbcPersistentTokenRepository)
+├── service/            # Business logic (UserService, CollectionService, GrammarService, McpTokenService, RefreshTokenService, EmailService, SyncService)
+└── utils/              # Common utilities (Pagination, Hasher, SyncCursor, TokenUtil)
 
 src/main/resources/
 ├── application.properties
-├── schema.sql           # MySQL DDL schema definitions
-├── templates/           # Thymeleaf templates (layout.html, auth/, collections/, grammars/)
+├── db/migration/       # Flyway SQL schema migrations (V1 through V4)
+├── templates/          # Thymeleaf templates (layout.html, auth/, collections/, grammars/, mcp/)
 └── static/
     ├── index.html       # Public marketing/landing page (plain HTML, not Thymeleaf)
     ├── css/             # Shared stylesheets (main.css) + page-specific overrides (landing.css)
-    ├── js/              # Shared script (main.js) + one file per page/feature (grammars.js, collections.js, ...)
+    ├── js/              # Shared script (main.js) + one file per page/feature (grammars.js, collections.js, profile.js, mcp.js, ...)
     └── fonts/           # Static font assets (e.g. vimala.ttf for Balinese script)
 ```
 
@@ -53,6 +53,8 @@ src/main/resources/
 ### Build & Test
 - **Compile**: `./mvnw compile`
 - **Run Tests**: `./mvnw test`
+- **Check Formatting**: `./mvnw spotless:check`
+- **Apply Formatting**: `./mvnw spotless:apply`
 - **Package JAR**: `./mvnw clean package`
 
 ### Run Application
@@ -62,32 +64,39 @@ src/main/resources/
 
 ## Backend & Database Conventions
 
-### 1. Database & Persistence (`JdbcTemplate`)
-- Database DDL schema is defined in `src/main/resources/db/migration/V1__baseline.sql`.
+### 1. Database & Persistence (`JdbcTemplate` & Flyway)
+- Database schema migrations are managed via Flyway in `src/main/resources/db/migration/` (`V1__baseline.sql`, `V2__refresh_tokens.sql`, `V3__email_verification.sql`, `V4__sync_support.sql`).
 - Persistence relies on raw SQL executed via `JdbcTemplate`. Do not introduce ORM/JPA mappings unless requested.
-- Primary keys are 36-character UUID strings (`VARCHAR(36)`).
+- Primary keys are 36-character UUID strings (`VARCHAR(36)`), supporting client-generated UUIDs on creation for offline sync, with fallback to MySQL auto-generated UUIDs.
+- Collections and grammars support soft deletion (`deleted_at IS NOT NULL`) with change tracking via monotonically incremented `version` numbers.
 
 ### 2. Architecture & Layer Responsibilities
 - **Controllers (Triple Architecture)**:
-  - **REST API Controllers** (`controller/api`): Annotated with `@RestController`. Handle JSON HTTP requests, validate payloads (`@Valid`), delegate execution to services, and return standardized responses (`HttpResponse<T>`). Secured with JWT tokens.
-  - **MVC Web Controllers** (`controller/web`): Annotated with `@Controller`. Handle web page navigation, process form submissions bound to DTOs (`th:object`, `BindingResult`), delegate business logic to services, populate `Model` attributes, and return Thymeleaf view template paths.
+  - **REST API Controllers** (`controller/api`): Annotated with `@RestController`. Handle JSON HTTP requests, validate payloads (`@Valid`), delegate execution to services, and return standardized envelopes (`HttpResponse<T>` with non-null `data` and machine-readable `code`).
+    - `AuthController` (`/api/auth`): Registration, login, token refresh, logout, email verification, and password reset.
+    - `ProfileController` (`/api/profile`): User profile detail, profile updates, email change request, password change, and account deletion.
+    - `CollectionController` (`/api/collections`): Vocabulary collection management.
+    - `GrammarController` (`/api/collections/{id}/grammars`): Grammar note management within collections.
+    - `SyncController` (`/api/sync`): Cursor-based delta synchronization feed for offline-first clients.
+    - `McpTokenController` (`/api/tokens`): MCP token lifecycle management.
+  - **MVC Web Controllers** (`controller/web`): Annotated with `@Controller` and prefixed with `Web` (`WebAuthController`, `WebProfileController`, `WebCollectionController`, `WebGrammarController`, `WebMcpTokenController`). Handle web page navigation, process form submissions bound to DTOs (`th:object`, `BindingResult`), delegate business logic to services, populate `Model` attributes, and return Thymeleaf view template paths.
   - **MCP Tools** (`controller/mcp`): `@Component` classes exposing `@McpTool`-annotated methods (Spring AI) as tools callable by AI clients over the embedded MCP server. Resolve the authenticated user from `SecurityContextHolder` (not `@AuthenticationPrincipal`, since tool methods aren't `@Controller` methods) and delegate straight into the same services as the REST/web controllers — no separate business logic. Secured with MCP tokens.
 - **Services**: Execute domain business logic, access control, and transaction rules. Reused by REST, MVC, and MCP tool front doors.
 - **Repositories**: Execute raw SQL queries using `JdbcTemplate` and map database rows to Java models via `RowMapper`.
-- **DTOs**: Keep strict separation between incoming `request` DTOs (e.g. `CreateGrammar`, `UserLogin`) and outgoing `response` DTOs (e.g. `HttpResponse`, `GrammarDetail`).
+- **DTOs**: Keep strict separation between incoming `request` DTOs (e.g. `CreateGrammar`, `UserLogin`, `UpdateProfile`) and outgoing `response` DTOs (e.g. `HttpResponse`, `UserProfile`, `GrammarDetail`).
 
 ### 3. Error Handling
-- Use specific domain exceptions (`NotFoundException`, `DuplicateEmailException`, `ForbiddenAccessException`, `LoginException`).
-- REST exceptions are centrally intercepted and transformed into standardized JSON responses by `@RestControllerAdvice` in `GlobalExceptionHandler`.
+- Use specific domain exceptions (`NotFoundException`, `DuplicateEmailException`, `ForbiddenAccessException`, `LoginException`, `TokenException`).
+- REST exceptions are centrally intercepted and transformed into standardized JSON responses (`HttpResponse<T>` with machine-readable error codes such as `NOT_FOUND`, `DUPLICATE_RESOURCE`, `VALIDATION_ERROR`, `UNAUTHORIZED`, etc.) by `@RestControllerAdvice` in `GlobalExceptionHandler`.
 - Web MVC exceptions are handled by rendering error pages or binding form validation errors to view models.
 
 ### 4. Security & Authentication
-- **REST Endpoints (`/api/**`)**: Guarded by `JwtAuthFilter` with stateless JWT bearer token authentication.
+- **REST Endpoints (`/api/**`)**: Guarded by `JwtAuthFilter` with stateless JWT bearer token authentication. Short-lived access tokens (15m) paired with rotating refresh tokens (30d) persisted as SHA-256 hashes in `refresh_tokens`.
 - **MCP Server (`/mcp/**`)**: Guarded by `McpAuthFilter` with stateless MCP token (`Bearer <token>`) authentication — a separate, opaque token type (managed via `McpTokenService`/`/api/tokens`/`/tokens`), independent from the login JWT so a leaked MCP token can't be used to change account credentials.
 - **MVC Web Routes**: Configured for session-based authentication rendering Thymeleaf views with CSRF protection enabled for form submissions.
-- **Remember Me**: Optional persistent login for the web UI, backed by `PersistentTokenBasedRememberMeServices` + a custom `JdbcPersistentTokenRepository` (raw `JdbcTemplate`, not Spring's deprecated `JdbcTokenRepositoryImpl`), storing rotating tokens in the `persistent_logins` table. Since `AuthController` performs login manually (not through Spring Security's standard `UsernamePasswordAuthenticationFilter`), it must call `RememberMeServices.loginSuccess(...)` itself when the `rememberMe` checkbox is set, and `logout(...)` cancels the cookie via `LogoutHandler`. `User` implements `UserDetails` (`getUsername()` returns `id`, not `email`) so `AppUserDetailsService` can resolve the same domain `User` used everywhere else as `@AuthenticationPrincipal`, and so `persistent_logins.user_id` is keyed off the immutable `id` rather than mutable `email`. Tokens are invalidated (`removeUserTokens`) on password change and account deletion in `UserService`.
+- **Remember Me**: Optional persistent login for the web UI, backed by `PersistentTokenBasedRememberMeServices` + a custom `JdbcPersistentTokenRepository` (raw `JdbcTemplate`, not Spring's deprecated `JdbcTokenRepositoryImpl`), storing rotating tokens in the `persistent_logins` table. Since `WebAuthController` performs login manually (not through Spring Security's standard `UsernamePasswordAuthenticationFilter`), it must call `RememberMeServices.loginSuccess(...)` itself when the `rememberMe` checkbox is set, and `logout(...)` cancels the cookie via `LogoutHandler`. `User` implements `UserDetails` (`getUsername()` returns `id`, not `email`) so `AppUserDetailsService` can resolve the same domain `User` used everywhere else as `@AuthenticationPrincipal`, and so `persistent_logins.user_id` is keyed off the immutable `id` rather than mutable `email`. Tokens are invalidated (`removeUserTokens`) on password change and account deletion in `UserService`.
 - `SecurityConfig` defines three ordered `SecurityFilterChain` beans, one per front door: `apiSecurityFilterChain` (`/api/**`, `@Order(1)`), `mcpSecurityFilterChain` (`/mcp/**`, `@Order(2)`), `webSecurityFilterChain` (everything else, `@Order(3)`).
-- Public endpoints (e.g., `/api/auth/register`, `/api/auth/login`, login/register web routes) are explicitly configured in `SecurityConfig`.
+- Public endpoints (e.g., `/api/auth/**`, login/register/verify-email/forgot-password web routes) are explicitly configured in `SecurityConfig`.
 - Static asset paths (`/css/**`, `/js/**`, `/images/**`, `/fonts/**`, `/webjars/**`) are `permitAll` in `webSecurityFilterChain` so they load on public pages (e.g. the landing page) without authentication. Add any new static asset directory here or it will 302-redirect to `/login`.
 
 ### 5. Search & Pagination

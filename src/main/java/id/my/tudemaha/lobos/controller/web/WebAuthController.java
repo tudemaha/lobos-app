@@ -1,14 +1,10 @@
 package id.my.tudemaha.lobos.controller.web;
 
 import id.my.tudemaha.lobos.dto.request.ResetPassword;
-import id.my.tudemaha.lobos.dto.request.UpdateEmail;
-import id.my.tudemaha.lobos.dto.request.UpdatePassword;
 import id.my.tudemaha.lobos.dto.request.UserLogin;
 import id.my.tudemaha.lobos.dto.request.UserRegister;
-import id.my.tudemaha.lobos.dto.request.UserUpdate;
 import id.my.tudemaha.lobos.exception.DuplicateEmailException;
 import id.my.tudemaha.lobos.exception.EmailNotVerifiedException;
-import id.my.tudemaha.lobos.exception.ForbiddenAccessException;
 import id.my.tudemaha.lobos.exception.InvalidTokenException;
 import id.my.tudemaha.lobos.exception.LoginException;
 import id.my.tudemaha.lobos.model.User;
@@ -17,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import java.util.Collections;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContext;
@@ -31,16 +28,17 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-
 @Controller
-public class AuthController {
+public class WebAuthController {
 
     private final UserService userService;
     private final SecurityContextRepository securityContextRepository;
     private final RememberMeServices rememberMeServices;
 
-    public AuthController(UserService userService, SecurityContextRepository securityContextRepository, RememberMeServices rememberMeServices) {
+    public WebAuthController(
+            UserService userService,
+            SecurityContextRepository securityContextRepository,
+            RememberMeServices rememberMeServices) {
         this.userService = userService;
         this.securityContextRepository = securityContextRepository;
         this.rememberMeServices = rememberMeServices;
@@ -62,7 +60,8 @@ public class AuthController {
     }
 
     @PostMapping("/auth/register")
-    public String register(@Valid @ModelAttribute("userRegister") UserRegister userRegister, BindingResult bindingResult) {
+    public String register(
+            @Valid @ModelAttribute("userRegister") UserRegister userRegister, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             return "auth/register";
         }
@@ -94,21 +93,21 @@ public class AuthController {
     public String login(
             @Valid @ModelAttribute("userLogin") UserLogin userLogin,
             HttpServletRequest request,
-            HttpServletResponse response
-    ) {
+            HttpServletResponse response) {
         User user;
         try {
             user = userService.authenticate(userLogin);
-        } catch(EmailNotVerifiedException e) {
+        } catch (EmailNotVerifiedException e) {
             return "redirect:/login?unverified&email=" + userLogin.getEmail();
-        } catch(LoginException e) {
+        } catch (LoginException e) {
             return "redirect:/login?error";
         }
 
         refreshAuthentication(user, request, response);
 
         if (userLogin.isRememberMe()) {
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
             rememberMeServices.loginSuccess(request, response, authToken);
         }
 
@@ -121,8 +120,7 @@ public class AuthController {
             @AuthenticationPrincipal User loggedInUser,
             HttpServletRequest request,
             HttpServletResponse response,
-            Model model
-    ) {
+            Model model) {
         if (t == null || t.isBlank()) {
             model.addAttribute("success", false);
             model.addAttribute("message", "Verification token is missing.");
@@ -171,10 +169,7 @@ public class AuthController {
 
     @GetMapping("/reset-password")
     public String resetPasswordPage(
-            @RequestParam(value = "t", required = false) String t,
-            @AuthenticationPrincipal User user,
-            Model model
-    ) {
+            @RequestParam(value = "t", required = false) String t, @AuthenticationPrincipal User user, Model model) {
         if (user != null) {
             return "redirect:/collections";
         }
@@ -188,7 +183,8 @@ public class AuthController {
             model.addAttribute("tokenValid", true);
         } catch (InvalidTokenException e) {
             model.addAttribute("tokenValid", false);
-            model.addAttribute("errorMessage", "The password reset link is invalid, has expired, or has already been used.");
+            model.addAttribute(
+                    "errorMessage", "The password reset link is invalid, has expired, or has already been used.");
         }
 
         return "auth/reset-password";
@@ -198,8 +194,7 @@ public class AuthController {
     public String resetPasswordWeb(
             @Valid @ModelAttribute("resetPassword") ResetPassword resetPassword,
             BindingResult bindingResult,
-            Model model
-    ) {
+            Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("tokenValid", true);
             return "auth/reset-password";
@@ -213,7 +208,8 @@ public class AuthController {
             return "auth/reset-password";
         } catch (InvalidTokenException e) {
             model.addAttribute("tokenValid", false);
-            model.addAttribute("errorMessage", "The password reset link is invalid, has expired, or has already been used.");
+            model.addAttribute(
+                    "errorMessage", "The password reset link is invalid, has expired, or has already been used.");
             return "auth/reset-password";
         }
 
@@ -223,7 +219,8 @@ public class AuthController {
     @PostMapping("/auth/logout")
     public String logout(HttpServletRequest request, HttpServletResponse response) {
         if (rememberMeServices instanceof LogoutHandler logoutHandler) {
-            logoutHandler.logout(request, response, SecurityContextHolder.getContext().getAuthentication());
+            logoutHandler.logout(
+                    request, response, SecurityContextHolder.getContext().getAuthentication());
         }
 
         SecurityContextHolder.clearContext();
@@ -236,131 +233,6 @@ public class AuthController {
         return "redirect:/login?logout";
     }
 
-    @GetMapping("/profile")
-    public String profilePage(
-            @AuthenticationPrincipal User user,
-            HttpServletRequest request,
-            HttpServletResponse response,
-            Model model
-    ) {
-        User freshUser = userService.findById(user.getId());
-        refreshAuthentication(freshUser, request, response);
-
-        model.addAttribute("currentUser", freshUser);
-        model.addAttribute("userUpdate", toUserUpdate(freshUser));
-        model.addAttribute("updateEmail", new UpdateEmail());
-        model.addAttribute("updatePassword", new UpdatePassword());
-        return "auth/profile";
-    }
-
-    @PostMapping("/auth/update")
-    public String updateProfile(
-            @AuthenticationPrincipal User user,
-            @Valid @ModelAttribute("userUpdate") UserUpdate userUpdate,
-            BindingResult bindingResult,
-            HttpServletRequest request,
-            HttpServletResponse response,
-            Model model
-    ) {
-        if (bindingResult.hasErrors()) {
-            User freshUser = userService.findById(user.getId());
-            model.addAttribute("currentUser", freshUser);
-            model.addAttribute("updateEmail", new UpdateEmail());
-            model.addAttribute("updatePassword", new UpdatePassword());
-            return "auth/profile";
-        }
-
-        userService.update(userUpdate, user.getId());
-
-        User freshUser = userService.findById(user.getId());
-        refreshAuthentication(freshUser, request, response);
-
-        return "redirect:/profile?updated";
-    }
-
-    @PatchMapping("/auth/email")
-    public String updateEmail(
-            @AuthenticationPrincipal User user,
-            @Valid @ModelAttribute("updateEmail") UpdateEmail updateEmail,
-            BindingResult bindingResult,
-            HttpServletRequest request,
-            HttpServletResponse response,
-            Model model
-    ) {
-        if (bindingResult.hasErrors()) {
-            User freshUser = userService.findById(user.getId());
-            model.addAttribute("currentUser", freshUser);
-            model.addAttribute("userUpdate", toUserUpdate(freshUser));
-            model.addAttribute("updatePassword", new UpdatePassword());
-            return "auth/profile";
-        }
-
-        try {
-            userService.updateEmail(updateEmail, user.getId());
-        } catch (DuplicateEmailException e) {
-            bindingResult.addError(new FieldError("updateEmail", "email", e.getMessage()));
-            User freshUser = userService.findById(user.getId());
-            model.addAttribute("currentUser", freshUser);
-            model.addAttribute("userUpdate", toUserUpdate(freshUser));
-            model.addAttribute("updatePassword", new UpdatePassword());
-            return "auth/profile";
-        }
-
-        User freshUser = userService.findById(user.getId());
-        refreshAuthentication(freshUser, request, response);
-
-        return "redirect:/profile?emailPending";
-    }
-
-    @PatchMapping("/auth/password")
-    public String updatePassword(
-            @AuthenticationPrincipal User user,
-            @Valid @ModelAttribute("updatePassword") UpdatePassword updatePassword,
-            BindingResult bindingResult,
-            Model model
-    ) {
-        if (bindingResult.hasErrors()) {
-            User freshUser = userService.findById(user.getId());
-            model.addAttribute("currentUser", freshUser);
-            model.addAttribute("userUpdate", toUserUpdate(freshUser));
-            model.addAttribute("updateEmail", new UpdateEmail());
-            return "auth/profile";
-        }
-
-        try {
-            userService.updatePassword(updatePassword, user.getId());
-        } catch (ForbiddenAccessException e) {
-            bindingResult.addError(new FieldError("updatePassword", "oldPassword", e.getMessage()));
-            User freshUser = userService.findById(user.getId());
-            model.addAttribute("currentUser", freshUser);
-            model.addAttribute("userUpdate", toUserUpdate(freshUser));
-            model.addAttribute("updateEmail", new UpdateEmail());
-            return "auth/profile";
-        } catch (IllegalArgumentException e) {
-            bindingResult.addError(new FieldError("updatePassword", "confirmNewPassword", e.getMessage()));
-            User freshUser = userService.findById(user.getId());
-            model.addAttribute("currentUser", freshUser);
-            model.addAttribute("userUpdate", toUserUpdate(freshUser));
-            model.addAttribute("updateEmail", new UpdateEmail());
-            return "auth/profile";
-        }
-
-        return "redirect:/profile?updated";
-    }
-
-    @DeleteMapping("/auth")
-    public String deleteAccount(@AuthenticationPrincipal User user, HttpServletRequest request) {
-        userService.delete(user.getId());
-
-        SecurityContextHolder.clearContext();
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
-        }
-
-        return "redirect:/login?deleted";
-    }
-
     private void refreshAuthentication(User user, HttpServletRequest request, HttpServletResponse response) {
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
@@ -370,12 +242,5 @@ public class AuthController {
         context.setAuthentication(authToken);
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, request, response);
-    }
-
-    private UserUpdate toUserUpdate(User user) {
-        UserUpdate userUpdate = new UserUpdate();
-        userUpdate.setFirstName(user.getFirstName());
-        userUpdate.setLastName(user.getLastName());
-        return userUpdate;
     }
 }

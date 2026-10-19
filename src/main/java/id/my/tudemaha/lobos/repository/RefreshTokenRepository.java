@@ -1,16 +1,15 @@
 package id.my.tudemaha.lobos.repository;
 
 import id.my.tudemaha.lobos.model.RefreshToken;
+import java.sql.PreparedStatement;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-
-import java.sql.PreparedStatement;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Repository
 public class RefreshTokenRepository {
@@ -29,29 +28,31 @@ public class RefreshTokenRepository {
             rs.getObject("expires_at", LocalDateTime.class),
             rs.getObject("used_at", LocalDateTime.class),
             rs.getObject("revoked_at", LocalDateTime.class),
-            rs.getObject("created_at", LocalDateTime.class)
-    );
+            rs.getObject("created_at", LocalDateTime.class));
 
     public void insert(RefreshToken refreshToken) {
-        String sql = "INSERT INTO refresh_tokens (user_id, family_id, token_hash, device_name, expires_at)" +
-                "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO refresh_tokens (user_id, family_id, token_hash, device_name, expires_at)"
+                + "VALUES (?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
-            ps.setString(1, refreshToken.getUserId());
-            ps.setString(2, refreshToken.getFamilyId());
-            ps.setString(3, refreshToken.getTokenHash());
-            ps.setString(4, refreshToken.getDeviceName());
-            ps.setObject(5, Timestamp.valueOf(refreshToken.getExpiresAt()));
+        jdbcTemplate.update(
+                connection -> {
+                    PreparedStatement ps = connection.prepareStatement(sql, new String[] {"id"});
+                    ps.setString(1, refreshToken.getUserId());
+                    ps.setString(2, refreshToken.getFamilyId());
+                    ps.setString(3, refreshToken.getTokenHash());
+                    ps.setString(4, refreshToken.getDeviceName());
+                    ps.setObject(5, Timestamp.valueOf(refreshToken.getExpiresAt()));
 
-            return ps;
-        }, keyHolder);
+                    return ps;
+                },
+                keyHolder);
     }
 
     public Optional<RefreshToken> findByTokenHash(String tokenHash) {
         String sql = "SELECT * FROM refresh_tokens WHERE token_hash = ?";
-        return jdbcTemplate.query(sql, refreshTokenRowMapper, tokenHash).stream().findFirst();
+        return jdbcTemplate.query(sql, refreshTokenRowMapper, tokenHash).stream()
+                .findFirst();
     }
 
     public void markAsUsed(String id) {
@@ -60,14 +61,14 @@ public class RefreshTokenRepository {
     }
 
     public void revokeFamily(String familyId) {
-        String sql = "UPDATE refresh_tokens SET revoked_at = CURRENT_TIMESTAMP " +
-                "WHERE family_id = ? AND revoked_at IS NULL";
+        String sql = "UPDATE refresh_tokens SET revoked_at = CURRENT_TIMESTAMP "
+                + "WHERE family_id = ? AND revoked_at IS NULL";
         jdbcTemplate.update(sql, familyId);
     }
 
     public void revokeAllByUserId(String userId) {
-        String sql = "UPDATE refresh_tokens SET revoked_at = CURRENT_TIMESTAMP " +
-                "WHERE user_id = ? AND revoked_at IS NULL";
+        String sql = "UPDATE refresh_tokens SET revoked_at = CURRENT_TIMESTAMP "
+                + "WHERE user_id = ? AND revoked_at IS NULL";
         jdbcTemplate.update(sql, userId);
     }
 

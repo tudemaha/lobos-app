@@ -13,5 +13,4 @@ public class LobosApplication {
     public static void main(String[] args) {
         SpringApplication.run(LobosApplication.class, args);
     }
-
 }

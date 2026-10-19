@@ -2,6 +2,7 @@ package id.my.tudemaha.lobos.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -10,8 +11,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service
@@ -42,8 +41,10 @@ public class EmailService {
                 subject.append("Confirm your new email address for Lobos");
                 context.setVariable("title", subject.toString());
                 context.setVariable("heading", "Confirm your new email address");
-                context.setVariable("message", "Hi " + firstName + ", we received a request" +
-                    " to update your account email address. Click below to verify and complete the change.");
+                context.setVariable(
+                        "message",
+                        "Hi " + firstName + ", we received a request"
+                                + " to update your account email address. Click below to verify and complete the change.");
                 context.setVariable("buttonText", "Confirm Email Change");
                 break;
             case "REGISTER":
@@ -51,9 +52,11 @@ public class EmailService {
                 subject.append("Verify your Lobos account");
                 context.setVariable("title", subject.toString());
                 context.setVariable("heading", "Welcome to Lobos, " + firstName + "!");
-                context.setVariable("message", "Thanks for signing up. Please" +
-                        " confirm your email address to activate your account and start organizing" +
-                        " your vocabulary and grammar notes.");
+                context.setVariable(
+                        "message",
+                        "Thanks for signing up. Please"
+                                + " confirm your email address to activate your account and start organizing"
+                                + " your vocabulary and grammar notes.");
                 context.setVariable("buttonText", "Verify Email");
                 break;
             case "FORGET":
@@ -61,8 +64,10 @@ public class EmailService {
                 subject.append("Reset your Lobos password");
                 context.setVariable("title", subject.toString());
                 context.setVariable("heading", "Reset your password");
-                context.setVariable("message", "Hi " + firstName + ", we received a request" +
-                        " to reset your Lobos account password. Click below to choose a new password.");
+                context.setVariable(
+                        "message",
+                        "Hi " + firstName + ", we received a request"
+                                + " to reset your Lobos account password. Click below to choose a new password.");
                 context.setVariable("buttonText", "Reset Password");
                 break;
         }
@@ -77,10 +82,7 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(
-                    message,
-                    MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
-                    StandardCharsets.UTF_8.name()
-            );
+                    message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
 
             helper.setFrom(fromEmail);
             helper.setTo(to);

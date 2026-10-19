@@ -34,7 +34,7 @@
             </ul>
         </div>
 
-        <form th:action="@{/auth/update}"
+        <form th:action="@{/profile/update}"
               th:object="${userUpdate}"
               method="post"
               class="space-y-4">
@@ -100,7 +100,7 @@
             </div>
         </div>
 
-        <form th:action="@{/auth/email}"
+        <form th:action="@{/profile/email}"
               th:object="${updateEmail}"
               method="post"
               class="space-y-4">
@@ -140,7 +140,7 @@
             </ul>
         </div>
 
-        <form th:action="@{/auth/password}"
+        <form th:action="@{/profile/password}"
               th:object="${updatePassword}"
               method="post"
               class="space-y-4">
@@ -237,7 +237,7 @@
 
         <!-- Hidden delete form -->
         <form id="delete-account-form"
-              th:action="@{/auth}"
+              th:action="@{/profile}"
               method="post"
               class="hidden">
             <input type="hidden" name="_method" value="DELETE"/>

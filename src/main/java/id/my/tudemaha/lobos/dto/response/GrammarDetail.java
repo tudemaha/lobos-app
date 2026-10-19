@@ -9,6 +9,7 @@ public class GrammarDetail {
     private String word;
     private String meaning;
     private String example;
+
     @JsonProperty("isStarred")
     private boolean isStarred;
 }

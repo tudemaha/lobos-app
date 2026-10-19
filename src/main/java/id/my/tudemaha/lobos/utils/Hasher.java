@@ -1,11 +1,10 @@
 package id.my.tudemaha.lobos.utils;
 
-import org.mindrot.jbcrypt.BCrypt;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class Hasher {
     public static String hashPassword(String password) {

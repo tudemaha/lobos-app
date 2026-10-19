@@ -1,8 +1,7 @@
 package id.my.tudemaha.lobos.dto.response;
 
-import lombok.Data;
-
 import java.time.LocalDateTime;
+import lombok.Data;
 
 @Data
 public class McpTokenData {

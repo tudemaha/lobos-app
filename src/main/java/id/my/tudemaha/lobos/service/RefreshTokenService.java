@@ -7,17 +7,15 @@ import id.my.tudemaha.lobos.repository.RefreshTokenRepository;
 import id.my.tudemaha.lobos.repository.UserRepository;
 import id.my.tudemaha.lobos.utils.Hasher;
 import id.my.tudemaha.lobos.utils.TokenUtil;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-
-import java.security.SecureRandom;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.*;
 
 @Slf4j
 @Service
@@ -29,15 +27,12 @@ public class RefreshTokenService {
     @Value("${jwt.refresh-ttl:30d}")
     private Duration refreshTtl;
 
-    public RefreshTokenService(
-            RefreshTokenRepository refreshTokenRepository,
-            UserRepository userRepository
-    ) {
+    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository, UserRepository userRepository) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.userRepository = userRepository;
     }
 
-    public record TokenPair(String refreshToken, User user) { }
+    public record TokenPair(String refreshToken, User user) {}
 
     public String generate(String userId, String deviceName) {
         String familyId = UUID.randomUUID().toString();
@@ -48,7 +43,8 @@ public class RefreshTokenService {
     public TokenPair rotateRefreshToken(String rawOldToken) {
         String tokenHash = Hasher.hashToken(rawOldToken);
 
-        RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(tokenHash)
+        RefreshToken refreshToken = refreshTokenRepository
+                .findByTokenHash(tokenHash)
                 .orElseThrow(() -> new InvalidTokenException("invalid refresh token"));
 
         if (refreshToken.getRevokedAt() != null) {
@@ -65,14 +61,12 @@ public class RefreshTokenService {
         }
 
         refreshTokenRepository.markAsUsed(refreshToken.getId());
-        User user = userRepository.findById(refreshToken.getUserId())
+        User user = userRepository
+                .findById(refreshToken.getUserId())
                 .orElseThrow(() -> new InvalidTokenException("invalid user"));
 
         String newRawToken = generateAndSaveToken(
-                refreshToken.getUserId(),
-                refreshToken.getFamilyId(),
-                refreshToken.getDeviceName()
-        );
+                refreshToken.getUserId(), refreshToken.getFamilyId(), refreshToken.getDeviceName());
 
         return new TokenPair(newRawToken, user);
     }
@@ -87,6 +81,7 @@ public class RefreshTokenService {
     public void revokeAll(User user) {
         revokeAll(user.getId());
     }
+
     public void revokeAll(String userId) {
         refreshTokenRepository.revokeAllByUserId(userId);
     }
@@ -104,17 +99,8 @@ public class RefreshTokenService {
         String tokenHash = Hasher.hashToken(rawToken);
 
         LocalDateTime expiresAt = LocalDateTime.now().plus(refreshTtl);
-        RefreshToken refreshToken = new RefreshToken(
-                null,
-                userId,
-                familyId,
-                tokenHash,
-                deviceName,
-                expiresAt,
-                null,
-                null,
-                null
-        );
+        RefreshToken refreshToken =
+                new RefreshToken(null, userId, familyId, tokenHash, deviceName, expiresAt, null, null, null);
         refreshTokenRepository.insert(refreshToken);
         return rawToken;
     }

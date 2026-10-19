@@ -8,17 +8,16 @@ import id.my.tudemaha.lobos.model.Grammar;
 import id.my.tudemaha.lobos.repository.CollectionRepository;
 import id.my.tudemaha.lobos.repository.GrammarRepository;
 import id.my.tudemaha.lobos.utils.SyncCursor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -55,11 +54,7 @@ public class SyncService {
             timeline.add(new TimelineItem(g.getUpdatedAt(), g.getId(), null, g));
         }
 
-        timeline.sort(
-                Comparator
-                        .comparing(TimelineItem::updatedAt)
-                        .thenComparing(TimelineItem::id)
-        );
+        timeline.sort(Comparator.comparing(TimelineItem::updatedAt).thenComparing(TimelineItem::id));
 
         boolean hasMore = timeline.size() > safeLimit;
         List<TimelineItem> pageItems = hasMore ? timeline.subList(0, safeLimit) : timeline;
@@ -71,14 +66,19 @@ public class SyncService {
             if (item.collection != null) {
                 Collection c = item.collection;
                 collections.add(new SyncCollectionData(
-                        c.getId(), c.getName(), c.getColor(), c.getCreatedAt(), c.getUpdatedAt(), c.getDeletedAt()
-                ));
+                        c.getId(), c.getName(), c.getColor(), c.getCreatedAt(), c.getUpdatedAt(), c.getDeletedAt()));
             } else if (item.grammar != null) {
                 Grammar g = item.grammar;
                 grammars.add(new SyncGrammarData(
-                        g.getId(), g.getCollectionId(), g.getWord(), g.getMeaning(), g.getExample(),
-                        g.isStarred(), g.getCreatedAt(), g.getUpdatedAt(), g.getDeletedAt()
-                ));
+                        g.getId(),
+                        g.getCollectionId(),
+                        g.getWord(),
+                        g.getMeaning(),
+                        g.getExample(),
+                        g.isStarred(),
+                        g.getCreatedAt(),
+                        g.getUpdatedAt(),
+                        g.getDeletedAt()));
             }
         }
 

@@ -28,31 +28,18 @@ public class McpTokenController {
     @PostMapping
     @Operation(summary = "Create an MCP token")
     public ResponseEntity<HttpResponse<CreateTokenResponse>> create(
-            @Valid @RequestBody CreateMcpToken createMcpToken,
-            @AuthenticationPrincipal User user
-    ) {
-        CreateTokenResponse createTokenResponse = mcpTokenService.generateToken(
-                createMcpToken,
-                user.getId()
-        );
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(HttpResponse.success(createTokenResponse));
+            @Valid @RequestBody CreateMcpToken createMcpToken, @AuthenticationPrincipal User user) {
+        CreateTokenResponse createTokenResponse = mcpTokenService.generateToken(createMcpToken, user.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(HttpResponse.success(createTokenResponse));
     }
 
     @GetMapping
     @Operation(summary = "Get all MCP tokens")
     public ResponseEntity<HttpResponse<McpTokenList>> getAllMcpTokens(
-            @AuthenticationPrincipal User user,
-            @ModelAttribute PaginationRequest paginationRequest
-    ) {
-        McpTokenList mcpTokenList = mcpTokenService.getMcpTokensByUserId(
-                user.getId(),
-                paginationRequest
-        );
+            @AuthenticationPrincipal User user, @ModelAttribute PaginationRequest paginationRequest) {
+        McpTokenList mcpTokenList = mcpTokenService.getMcpTokensByUserId(user.getId(), paginationRequest);
 
-        return ResponseEntity
-                .ok(HttpResponse.success(mcpTokenList));
+        return ResponseEntity.ok(HttpResponse.success(mcpTokenList));
     }
 
     @PatchMapping("/{id}")
@@ -60,21 +47,16 @@ public class McpTokenController {
     public ResponseEntity<HttpResponse<Void>> updateName(
             @Valid @RequestBody CreateMcpToken createMcpToken,
             @PathVariable String id,
-            @AuthenticationPrincipal User user
-    ) {
+            @AuthenticationPrincipal User user) {
         mcpTokenService.updateName(createMcpToken, id, user.getId());
-        return ResponseEntity
-                .ok(HttpResponse.success());
+        return ResponseEntity.ok(HttpResponse.success());
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete/revoke unused MCP token")
     public ResponseEntity<HttpResponse<Void>> deleteMcpToken(
-            @PathVariable String id,
-            @AuthenticationPrincipal User user
-    ) {
+            @PathVariable String id, @AuthenticationPrincipal User user) {
         mcpTokenService.delete(id, user.getId());
-        return ResponseEntity
-                .ok(HttpResponse.success());
+        return ResponseEntity.ok(HttpResponse.success());
     }
 }

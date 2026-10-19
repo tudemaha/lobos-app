@@ -28,8 +28,7 @@ public class SyncController {
     public ResponseEntity<HttpResponse<SyncChangesData>> getChanges(
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "200") int limit,
-            @AuthenticationPrincipal User user
-    ) {
+            @AuthenticationPrincipal User user) {
         SyncChangesData data = syncService.getChanges(user.getId(), cursor, limit);
         return ResponseEntity.ok(HttpResponse.success(data));
     }

@@ -11,17 +11,16 @@ import id.my.tudemaha.lobos.repository.UserRepository;
 import id.my.tudemaha.lobos.security.JwtService;
 import id.my.tudemaha.lobos.utils.Hasher;
 import id.my.tudemaha.lobos.utils.TokenUtil;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -42,8 +41,7 @@ public class UserService {
             RefreshTokenService refreshTokenService,
             PersistentTokenRepository persistentTokenRepository,
             EmailService emailService,
-            EmailVerificationTokenRepository emailVerificationTokenRepository
-    ) {
+            EmailVerificationTokenRepository emailVerificationTokenRepository) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
@@ -54,7 +52,7 @@ public class UserService {
 
     @Transactional
     public void register(UserRegister userRegister) {
-        if(!userRegister.getPassword().equals(userRegister.getConfirmPassword())) {
+        if (!userRegister.getPassword().equals(userRegister.getConfirmPassword())) {
             throw new IllegalArgumentException("Password and password confirmation do not match");
         }
 
@@ -62,7 +60,7 @@ public class UserService {
         newUser.setId(UUID.randomUUID().toString());
 
         Optional<User> user = userRepository.findByEmail(newUser.getEmail());
-        if(user.isPresent()) {
+        if (user.isPresent()) {
             throw new DuplicateEmailException(newUser.getEmail());
         }
 
@@ -72,8 +70,7 @@ public class UserService {
     }
 
     public User authenticate(UserLogin userLogin) {
-        User user = userRepository.findByEmail(userLogin.getEmail())
-                .orElseThrow(LoginException::new);
+        User user = userRepository.findByEmail(userLogin.getEmail()).orElseThrow(LoginException::new);
 
         if (!Hasher.checkPassword(userLogin.getPassword(), user.getPassword())) {
             throw new LoginException();
@@ -100,17 +97,17 @@ public class UserService {
     @Transactional
     public void verifyEmail(String rawToken) {
         String hashToken = Hasher.hashToken(rawToken);
-        EmailVerificationToken emailVerificationToken = emailVerificationTokenRepository.findByTokenHash(hashToken)
+        EmailVerificationToken emailVerificationToken = emailVerificationTokenRepository
+                .findByTokenHash(hashToken)
                 .orElseThrow(() -> new InvalidTokenException("invalid or expired verification token"));
 
-        if (
-                emailVerificationToken.getExpiresAt().isBefore(LocalDateTime.now()) ||
-                emailVerificationToken.getUsedAt() != null
-        ) {
+        if (emailVerificationToken.getExpiresAt().isBefore(LocalDateTime.now())
+                || emailVerificationToken.getUsedAt() != null) {
             throw new InvalidTokenException("invalid or expired verification token");
         }
 
-        User user = userRepository.findById(emailVerificationToken.getUserId())
+        User user = userRepository
+                .findById(emailVerificationToken.getUserId())
                 .orElseThrow(() -> new InvalidTokenException("invalid or expired verification token"));
 
         switch (emailVerificationToken.getPurpose()) {
@@ -122,11 +119,9 @@ public class UserService {
                     throw new InvalidTokenException("No pending email change found");
                 }
 
-                userRepository
-                        .findByEmail(user.getPendingEmail())
-                        .ifPresent(checkUser -> {
-                            throw new DuplicateEmailException(user.getPendingEmail());
-                        });
+                userRepository.findByEmail(user.getPendingEmail()).ifPresent(checkUser -> {
+                    throw new DuplicateEmailException(user.getPendingEmail());
+                });
 
                 user.setEmail(user.getPendingEmail());
                 user.setPendingEmail(null);
@@ -167,13 +162,12 @@ public class UserService {
         }
 
         String hashToken = Hasher.hashToken(rawToken);
-        EmailVerificationToken emailVerificationToken = emailVerificationTokenRepository.findByTokenHash(hashToken)
+        EmailVerificationToken emailVerificationToken = emailVerificationTokenRepository
+                .findByTokenHash(hashToken)
                 .orElseThrow(() -> new InvalidTokenException("invalid or expired reset password token"));
 
-        if (
-                emailVerificationToken.getUsedAt() != null ||
-                emailVerificationToken.getExpiresAt().isBefore(LocalDateTime.now())
-        ) {
+        if (emailVerificationToken.getUsedAt() != null
+                || emailVerificationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new InvalidTokenException("invalid or expired reset password token");
         }
 
@@ -192,8 +186,8 @@ public class UserService {
 
         EmailVerificationToken emailVerificationToken = validateResetToken(resetPassword.getToken());
 
-
-        User user = userRepository.findById(emailVerificationToken.getUserId())
+        User user = userRepository
+                .findById(emailVerificationToken.getUserId())
                 .orElseThrow(() -> new InvalidTokenException("invalid or expired reset password token"));
         user.setPassword(Hasher.hashPassword(resetPassword.getPassword()));
         userRepository.update(user);
@@ -204,7 +198,8 @@ public class UserService {
     }
 
     public Token refresh(RefreshRequest refreshRequest) {
-        RefreshTokenService.TokenPair tokenPair = refreshTokenService.rotateRefreshToken(refreshRequest.getRefreshToken());
+        RefreshTokenService.TokenPair tokenPair =
+                refreshTokenService.rotateRefreshToken(refreshRequest.getRefreshToken());
         String accessToken = jwtService.generateToken(tokenPair.user());
 
         Token token = new Token();
@@ -252,11 +247,11 @@ public class UserService {
     public void updatePassword(UpdatePassword updatePassword, String id) {
         User user = userRepository.findById(id).orElseThrow(NotFoundException::new);
         boolean match = Hasher.checkPassword(updatePassword.getOldPassword(), user.getPassword());
-        if(!match) {
+        if (!match) {
             throw new ForbiddenAccessException("invalid old password");
         }
 
-        if(!updatePassword.getNewPassword().equals(updatePassword.getConfirmNewPassword())) {
+        if (!updatePassword.getNewPassword().equals(updatePassword.getConfirmNewPassword())) {
             throw new IllegalArgumentException("newPassword and confirmNewPassword do not match");
         }
 
@@ -291,15 +286,8 @@ public class UserService {
         String tokenHash = Hasher.hashToken(rawToken);
 
         LocalDateTime expiresAt = LocalDateTime.now().plus(verificationTtl);
-        EmailVerificationToken token = new EmailVerificationToken(
-                null,
-                userId,
-                tokenHash,
-                purpose,
-                null,
-                expiresAt,
-                null
-        );
+        EmailVerificationToken token =
+                new EmailVerificationToken(null, userId, tokenHash, purpose, null, expiresAt, null);
 
         emailVerificationTokenRepository.insert(token);
         return rawToken;

@@ -28,27 +28,17 @@ public class CollectionController {
     @PostMapping
     @Operation(summary = "Create a new collection")
     public ResponseEntity<HttpResponse<CollectionData>> createCollection(
-            @Valid @RequestBody CreateCollection createCollection,
-            @AuthenticationPrincipal User user
-            ) {
+            @Valid @RequestBody CreateCollection createCollection, @AuthenticationPrincipal User user) {
         CollectionData collectionData = collectionService.createCollection(createCollection, user.getId());
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(HttpResponse.success(collectionData));
+        return ResponseEntity.status(HttpStatus.CREATED).body(HttpResponse.success(collectionData));
     }
 
     @GetMapping
     @Operation(summary = "Get all collections")
     public ResponseEntity<HttpResponse<CollectionList>> getAllCollections(
-            @AuthenticationPrincipal User user,
-            @ModelAttribute PaginationRequest paginationRequest
-            ) {
-        CollectionList collectionList = collectionService.getCollectionsByUserId(
-                user.getId(),
-                paginationRequest
-        );
-        return ResponseEntity
-                .ok(HttpResponse.success(collectionList));
+            @AuthenticationPrincipal User user, @ModelAttribute PaginationRequest paginationRequest) {
+        CollectionList collectionList = collectionService.getCollectionsByUserId(user.getId(), paginationRequest);
+        return ResponseEntity.ok(HttpResponse.success(collectionList));
     }
 
     @PutMapping("/{id}")
@@ -56,21 +46,16 @@ public class CollectionController {
     public ResponseEntity<HttpResponse<Void>> updateCollection(
             @Valid @RequestBody CreateCollection createCollection,
             @PathVariable String id,
-            @AuthenticationPrincipal User user
-    ) {
+            @AuthenticationPrincipal User user) {
         collectionService.update(createCollection, id, user.getId());
-        return ResponseEntity
-                .ok(HttpResponse.success());
+        return ResponseEntity.ok(HttpResponse.success());
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a collection")
     public ResponseEntity<HttpResponse<Void>> deleteCollection(
-            @PathVariable String id,
-            @AuthenticationPrincipal User user
-    ) {
+            @PathVariable String id, @AuthenticationPrincipal User user) {
         collectionService.delete(id, user.getId());
-        return ResponseEntity
-                .ok(HttpResponse.success());
+        return ResponseEntity.ok(HttpResponse.success());
     }
 }

@@ -7,6 +7,7 @@ import java.util.Base64;
 
 public record SyncCursor(LocalDateTime updatedAt, String id) {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
     public static SyncCursor decode(String rawCursor) {
         if (rawCursor == null || rawCursor.isBlank()) {
             return null;

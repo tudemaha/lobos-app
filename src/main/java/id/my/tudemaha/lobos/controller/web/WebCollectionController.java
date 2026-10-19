@@ -22,15 +22,8 @@ public class WebCollectionController {
 
     @GetMapping
     public String index(
-            @AuthenticationPrincipal User user,
-            @ModelAttribute PaginationRequest paginationRequest,
-            Model model
-    ) {
-        CollectionList collectionList =
-                collectionService.getCollectionsByUserId(
-                        user.getId(),
-                        paginationRequest
-                );
+            @AuthenticationPrincipal User user, @ModelAttribute PaginationRequest paginationRequest, Model model) {
+        CollectionList collectionList = collectionService.getCollectionsByUserId(user.getId(), paginationRequest);
         model.addAttribute("collectionList", collectionList);
 
         return "collections/index";
@@ -39,8 +32,7 @@ public class WebCollectionController {
     @PostMapping
     public String createCollection(
             @AuthenticationPrincipal User user,
-            @Valid @ModelAttribute("createCollection") CreateCollection createCollection
-    ) {
+            @Valid @ModelAttribute("createCollection") CreateCollection createCollection) {
         collectionService.createCollection(createCollection, user.getId());
         return "redirect:/collections";
     }
@@ -49,17 +41,13 @@ public class WebCollectionController {
     public String updateCollection(
             @AuthenticationPrincipal User user,
             @PathVariable String id,
-            @Valid @ModelAttribute("createCollection") CreateCollection createCollection
-    ) {
+            @Valid @ModelAttribute("createCollection") CreateCollection createCollection) {
         collectionService.update(createCollection, id, user.getId());
         return "redirect:/collections";
     }
 
     @DeleteMapping("/{id}")
-    public String deleteCollection(
-            @AuthenticationPrincipal User user,
-            @PathVariable String id
-    ) {
+    public String deleteCollection(@AuthenticationPrincipal User user, @PathVariable String id) {
         collectionService.delete(id, user.getId());
         return "redirect:/collections";
     }

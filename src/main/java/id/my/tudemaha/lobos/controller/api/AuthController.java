@@ -1,8 +1,8 @@
 package id.my.tudemaha.lobos.controller.api;
 
 import id.my.tudemaha.lobos.dto.request.*;
-import id.my.tudemaha.lobos.dto.response.Token;
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
+import id.my.tudemaha.lobos.dto.response.Token;
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.service.RefreshTokenService;
 import id.my.tudemaha.lobos.service.UserService;
@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "User/Auth", description = "User and auth management endpoints")
-public class UserController {
+@Tag(name = "Auth", description = "Authentication and session management endpoints")
+public class AuthController {
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
 
-    public UserController(UserService userService, RefreshTokenService refreshTokenService) {
+    public AuthController(UserService userService, RefreshTokenService refreshTokenService) {
         this.userService = userService;
         this.refreshTokenService = refreshTokenService;
     }
@@ -41,7 +41,7 @@ public class UserController {
     }
 
     @PostMapping("/verify-email")
-    @Operation(summary = "Verify new created account or email changes")
+    @Operation(summary = "Verify newly created account or email changes")
     public ResponseEntity<HttpResponse<Void>> verifyEmail(@RequestParam String t) {
         userService.verifyEmail(t);
         return ResponseEntity.ok(HttpResponse.success());
@@ -62,7 +62,7 @@ public class UserController {
     }
 
     @PostMapping("/reset-password")
-    @Operation(summary = "Reset user's password")
+    @Operation(summary = "Reset user password")
     public ResponseEntity<HttpResponse<Void>> resetPassword(@Valid @RequestBody ResetPassword resetPassword) {
         userService.resetPassword(resetPassword);
         return ResponseEntity.ok(HttpResponse.success());
@@ -83,46 +83,9 @@ public class UserController {
     }
 
     @PostMapping("/logout-all")
-    @Operation(summary = "Logout from all device")
+    @Operation(summary = "Logout from all devices")
     public ResponseEntity<HttpResponse<Void>> logoutAll(@AuthenticationPrincipal User user) {
         refreshTokenService.revokeAll(user);
-        return ResponseEntity.ok(HttpResponse.success());
-    }
-
-    @PutMapping("/update")
-    @Operation(summary = "Update a user's detail")
-    public ResponseEntity<HttpResponse<Void>> updateUser(
-            @Valid @RequestBody UserUpdate userUpdate,
-            @AuthenticationPrincipal User user
-            ) {
-        userService.update(userUpdate, user.getId());
-        return ResponseEntity.ok(HttpResponse.success());
-    }
-
-    @PatchMapping("/email")
-    @Operation(summary = "Update a user's email")
-    public ResponseEntity<HttpResponse<Void>> updateEmail(
-            @Valid @RequestBody UpdateEmail updateEmail,
-            @AuthenticationPrincipal User user
-    ) {
-        userService.updateEmail(updateEmail, user.getId());
-        return ResponseEntity.ok(HttpResponse.success());
-    }
-
-    @PatchMapping("/password")
-    @Operation(summary = "Update a user's password")
-    public ResponseEntity<HttpResponse<Void>> updatePassword(
-            @Valid @RequestBody UpdatePassword updatePassword,
-            @AuthenticationPrincipal User user
-            ) {
-        userService.updatePassword(updatePassword, user.getId());
-        return ResponseEntity.ok(HttpResponse.success());
-    }
-
-    @DeleteMapping()
-    @Operation(summary = "Delete a user's account")
-    public ResponseEntity<HttpResponse<Void>> deleteUser(@AuthenticationPrincipal User user) {
-        userService.delete(user.getId());
         return ResponseEntity.ok(HttpResponse.success());
     }
 }
