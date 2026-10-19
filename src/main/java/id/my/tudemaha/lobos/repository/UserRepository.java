@@ -1,16 +1,15 @@
 package id.my.tudemaha.lobos.repository;
 
 import id.my.tudemaha.lobos.model.User;
+import java.sql.PreparedStatement;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-
-import java.sql.PreparedStatement;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public class UserRepository {
@@ -27,8 +26,7 @@ public class UserRepository {
             rs.getString("email"),
             rs.getString("password"),
             rs.getObject("created_at", LocalDateTime.class),
-            rs.getObject("updated_at", LocalDateTime.class)
-    );
+            rs.getObject("updated_at", LocalDateTime.class));
 
     public List<User> findAll() {
         String sql = "SELECT * FROM users";
@@ -46,30 +44,26 @@ public class UserRepository {
     }
 
     public void save(User user) {
-        String sql = "INSERT INTO users (first_name, last_name, email, password)" +
-                " VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO users (first_name, last_name, email, password)" + " VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
-            ps.setString(1, user.getFirstName());
-            ps.setString(2, user.getLastName());
-            ps.setString(3, user.getEmail());
-            ps.setString(4, user.getPassword());
+        jdbcTemplate.update(
+                connection -> {
+                    PreparedStatement ps = connection.prepareStatement(sql, new String[] {"id"});
+                    ps.setString(1, user.getFirstName());
+                    ps.setString(2, user.getLastName());
+                    ps.setString(3, user.getEmail());
+                    ps.setString(4, user.getPassword());
 
-            return ps;
-        }, keyHolder);
+                    return ps;
+                },
+                keyHolder);
     }
 
     public void update(User user) {
         String sql = "UPDATE users SET first_name = ?, last_name = ?, email = ?, password = ? WHERE id = ?";
-        jdbcTemplate.update(sql,
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getPassword(),
-                user.getId()
-        );
+        jdbcTemplate.update(
+                sql, user.getFirstName(), user.getLastName(), user.getEmail(), user.getPassword(), user.getId());
     }
 
     public void delete(String id) {

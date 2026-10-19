@@ -5,17 +5,15 @@ import id.my.tudemaha.lobos.dto.request.PaginationRequest;
 import id.my.tudemaha.lobos.dto.response.CollectionData;
 import id.my.tudemaha.lobos.dto.response.CollectionList;
 import id.my.tudemaha.lobos.dto.response.PaginationResponse;
-import id.my.tudemaha.lobos.utils.Pagination;
 import id.my.tudemaha.lobos.exception.ForbiddenAccessException;
-
 import id.my.tudemaha.lobos.exception.NotFoundException;
 import id.my.tudemaha.lobos.mapper.CollectionMapper;
 import id.my.tudemaha.lobos.model.Collection;
 import id.my.tudemaha.lobos.repository.CollectionRepository;
-import org.springframework.stereotype.Service;
-
+import id.my.tudemaha.lobos.utils.Pagination;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.stereotype.Service;
 
 @Service
 public class CollectionService {
@@ -34,18 +32,17 @@ public class CollectionService {
 
     public CollectionList getCollectionsByUserId(String id, PaginationRequest paginationRequest) {
         PaginationRequest validPaginationRequest = Pagination.buildPaginationRequest(paginationRequest);
-        CollectionRepository.PaginatedCollection paginatedCollection = collectionRepository.findAllByUserId(id, validPaginationRequest);
+        CollectionRepository.PaginatedCollection paginatedCollection =
+                collectionRepository.findAllByUserId(id, validPaginationRequest);
 
-        List<CollectionData> collectionData = paginatedCollection.collections()
-                .stream()
+        List<CollectionData> collectionData = paginatedCollection.collections().stream()
                 .map(CollectionMapper::toDto)
                 .toList();
 
         PaginationResponse paginationResponse = new PaginationResponse();
         paginationResponse.setPage(validPaginationRequest.getPage());
         paginationResponse.setTotalPage(
-                Math.ceilDiv(paginatedCollection.totalCount(), validPaginationRequest.getPerPage())
-        );
+                Math.ceilDiv(paginatedCollection.totalCount(), validPaginationRequest.getPerPage()));
 
         CollectionList collectionList = new CollectionList();
         collectionList.setCollections(collectionData);
@@ -53,7 +50,6 @@ public class CollectionService {
 
         return collectionList;
     }
-
 
     public void update(CreateCollection createCollection, String collectionId, String userId) {
         Optional<Collection> collectionOpt = collectionRepository.findById(collectionId);

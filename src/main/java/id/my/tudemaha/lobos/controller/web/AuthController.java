@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import java.util.Collections;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContext;
@@ -32,8 +33,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
-import java.util.Collections;
-
 @Controller
 public class AuthController {
 
@@ -41,7 +40,10 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository;
     private final RememberMeServices rememberMeServices;
 
-    public AuthController(UserService userService, SecurityContextRepository securityContextRepository, RememberMeServices rememberMeServices) {
+    public AuthController(
+            UserService userService,
+            SecurityContextRepository securityContextRepository,
+            RememberMeServices rememberMeServices) {
         this.userService = userService;
         this.securityContextRepository = securityContextRepository;
         this.rememberMeServices = rememberMeServices;
@@ -63,7 +65,8 @@ public class AuthController {
     }
 
     @PostMapping("/auth/register")
-    public String register(@Valid @ModelAttribute("userRegister") UserRegister userRegister, BindingResult bindingResult) {
+    public String register(
+            @Valid @ModelAttribute("userRegister") UserRegister userRegister, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             return "auth/register";
         }
@@ -95,19 +98,19 @@ public class AuthController {
     public String login(
             @Valid @ModelAttribute("userLogin") UserLogin userLogin,
             HttpServletRequest request,
-            HttpServletResponse response
-    ) {
+            HttpServletResponse response) {
         User user;
         try {
             user = userService.authenticate(userLogin);
-        } catch(LoginException e) {
+        } catch (LoginException e) {
             return "redirect:/login?error";
         }
 
         refreshAuthentication(user, request, response);
 
         if (userLogin.isRememberMe()) {
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
             rememberMeServices.loginSuccess(request, response, authToken);
         }
 
@@ -117,7 +120,8 @@ public class AuthController {
     @PostMapping("/auth/logout")
     public String logout(HttpServletRequest request, HttpServletResponse response) {
         if (rememberMeServices instanceof LogoutHandler logoutHandler) {
-            logoutHandler.logout(request, response, SecurityContextHolder.getContext().getAuthentication());
+            logoutHandler.logout(
+                    request, response, SecurityContextHolder.getContext().getAuthentication());
         }
 
         SecurityContextHolder.clearContext();
@@ -145,8 +149,7 @@ public class AuthController {
             BindingResult bindingResult,
             HttpServletRequest request,
             HttpServletResponse response,
-            Model model
-    ) {
+            Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("updateEmail", toUpdateEmail(user));
             model.addAttribute("updatePassword", new UpdatePassword());
@@ -169,8 +172,7 @@ public class AuthController {
             BindingResult bindingResult,
             HttpServletRequest request,
             HttpServletResponse response,
-            Model model
-    ) {
+            Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("userUpdate", toUserUpdate(user));
             model.addAttribute("updatePassword", new UpdatePassword());
@@ -197,8 +199,7 @@ public class AuthController {
             @AuthenticationPrincipal User user,
             @Valid @ModelAttribute("updatePassword") UpdatePassword updatePassword,
             BindingResult bindingResult,
-            Model model
-    ) {
+            Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("userUpdate", toUserUpdate(user));
             model.addAttribute("updateEmail", toUpdateEmail(user));

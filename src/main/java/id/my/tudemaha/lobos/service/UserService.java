@@ -11,10 +11,9 @@ import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.repository.UserRepository;
 import id.my.tudemaha.lobos.security.JwtService;
 import id.my.tudemaha.lobos.utils.PasswordHasher;
+import java.util.Optional;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -22,21 +21,22 @@ public class UserService {
     private final JwtService jwtService;
     private final PersistentTokenRepository persistentTokenRepository;
 
-    public UserService(UserRepository userRepository, JwtService jwtService,  PersistentTokenRepository persistentTokenRepository) {
+    public UserService(
+            UserRepository userRepository, JwtService jwtService, PersistentTokenRepository persistentTokenRepository) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.persistentTokenRepository = persistentTokenRepository;
     }
 
     public void register(UserRegister userRegister) {
-        if(!userRegister.getPassword().equals(userRegister.getConfirmPassword())) {
+        if (!userRegister.getPassword().equals(userRegister.getConfirmPassword())) {
             throw new IllegalArgumentException("Password and password confirmation do not match");
         }
 
         User newUser = UserMapper.toEntity(userRegister);
 
         Optional<User> user = userRepository.findByEmail(newUser.getEmail());
-        if(user.isPresent()) {
+        if (user.isPresent()) {
             throw new DuplicateEmailException(newUser.getEmail());
         }
 
@@ -102,11 +102,11 @@ public class UserService {
 
         User user = userOpt.get();
         boolean match = PasswordHasher.checkPassword(updatePassword.getOldPassword(), user.getPassword());
-        if(!match) {
+        if (!match) {
             throw new ForbiddenAccessException("invalid old password");
         }
 
-        if(!updatePassword.getNewPassword().equals(updatePassword.getConfirmNewPassword())) {
+        if (!updatePassword.getNewPassword().equals(updatePassword.getConfirmNewPassword())) {
             throw new IllegalArgumentException("newPassword and confirmNewPassword do not match");
         }
 

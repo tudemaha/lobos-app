@@ -27,7 +27,8 @@ public class UserController {
     @Operation(summary = "Register endpoint")
     public ResponseEntity<HttpResponse<Void>> registerUser(@Valid @RequestBody UserRegister userRegister) {
         userService.register(userRegister);
-        return ResponseEntity.status(HttpStatus.CREATED).body(HttpResponse.success("user registered successfully", null));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(HttpResponse.success("user registered successfully", null));
     }
 
     @PostMapping("/login")
@@ -40,9 +41,7 @@ public class UserController {
     @PutMapping("/update")
     @Operation(summary = "Update a user's detail")
     public ResponseEntity<HttpResponse<Void>> updateUser(
-            @Valid @RequestBody UserUpdate userUpdate,
-            @AuthenticationPrincipal User user
-            ) {
+            @Valid @RequestBody UserUpdate userUpdate, @AuthenticationPrincipal User user) {
         userService.update(userUpdate, user.getId());
         return ResponseEntity.ok(HttpResponse.success("profile updated successfully", null));
     }
@@ -50,9 +49,7 @@ public class UserController {
     @PatchMapping("/email")
     @Operation(summary = "Update a user's email")
     public ResponseEntity<HttpResponse<Void>> updateEmail(
-            @Valid @RequestBody UpdateEmail updateEmail,
-            @AuthenticationPrincipal User user
-    ) {
+            @Valid @RequestBody UpdateEmail updateEmail, @AuthenticationPrincipal User user) {
         userService.updateEmail(updateEmail, user.getId());
         return ResponseEntity.ok(HttpResponse.success("email updated successfully", null));
     }
@@ -60,9 +57,7 @@ public class UserController {
     @PatchMapping("/password")
     @Operation(summary = "Update a user's password")
     public ResponseEntity<HttpResponse<Void>> updatePassword(
-            @Valid @RequestBody UpdatePassword updatePassword,
-            @AuthenticationPrincipal User user
-            ) {
+            @Valid @RequestBody UpdatePassword updatePassword, @AuthenticationPrincipal User user) {
         userService.updatePassword(updatePassword, user.getId());
         return ResponseEntity.ok(HttpResponse.success("password updated successfully", null));
     }

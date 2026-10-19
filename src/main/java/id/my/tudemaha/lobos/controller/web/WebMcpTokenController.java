@@ -24,12 +24,8 @@ public class WebMcpTokenController {
 
     @GetMapping
     public String index(
-            @AuthenticationPrincipal User user,
-            @ModelAttribute PaginationRequest paginationRequest,
-            Model model
-    ) {
-        McpTokenList mcpTokenList =
-                mcpTokenService.getMcpTokensByUserId(user.getId(), paginationRequest);
+            @AuthenticationPrincipal User user, @ModelAttribute PaginationRequest paginationRequest, Model model) {
+        McpTokenList mcpTokenList = mcpTokenService.getMcpTokensByUserId(user.getId(), paginationRequest);
         model.addAttribute("mcpTokenList", mcpTokenList);
 
         return "mcp/index";
@@ -39,10 +35,8 @@ public class WebMcpTokenController {
     public String createToken(
             @AuthenticationPrincipal User user,
             @Valid @ModelAttribute("createMcpToken") CreateMcpToken createMcpToken,
-            RedirectAttributes redirectAttributes
-    ) {
-        CreateTokenResponse createTokenResponse =
-                mcpTokenService.generateToken(createMcpToken, user.getId());
+            RedirectAttributes redirectAttributes) {
+        CreateTokenResponse createTokenResponse = mcpTokenService.generateToken(createMcpToken, user.getId());
         redirectAttributes.addFlashAttribute("newToken", createTokenResponse.getToken());
 
         return "redirect:/tokens";
@@ -52,18 +46,14 @@ public class WebMcpTokenController {
     public String updateName(
             @AuthenticationPrincipal User user,
             @PathVariable String id,
-            @Valid @ModelAttribute("createMcpToken") CreateMcpToken createMcpToken
-    ) {
+            @Valid @ModelAttribute("createMcpToken") CreateMcpToken createMcpToken) {
         mcpTokenService.updateName(createMcpToken, id, user.getId());
 
         return "redirect:/tokens";
     }
 
     @DeleteMapping("/{id}")
-    public String deleteToken(
-            @AuthenticationPrincipal User user,
-            @PathVariable String id
-    ) {
+    public String deleteToken(@AuthenticationPrincipal User user, @PathVariable String id) {
         mcpTokenService.delete(id, user.getId());
 
         return "redirect:/tokens";

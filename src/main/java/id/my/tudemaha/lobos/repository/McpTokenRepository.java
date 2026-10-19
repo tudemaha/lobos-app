@@ -2,17 +2,16 @@ package id.my.tudemaha.lobos.repository;
 
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
 import id.my.tudemaha.lobos.model.McpToken;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Repository;
-
 import java.sql.PreparedStatement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public class McpTokenRepository {
@@ -28,22 +27,22 @@ public class McpTokenRepository {
             rs.getString("name"),
             rs.getString("token"),
             rs.getObject("created_at", LocalDateTime.class),
-            rs.getObject("last_used_at", LocalDateTime.class)
-    );
+            rs.getObject("last_used_at", LocalDateTime.class));
 
     public void insert(McpToken mcpToken) {
-        String sql = "INSERT INTO mcp_tokens (user_id, name, token)" +
-                " VALUES (?, ?, ?)";
+        String sql = "INSERT INTO mcp_tokens (user_id, name, token)" + " VALUES (?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
-            ps.setString(1, mcpToken.getUserId());
-            ps.setString(2, mcpToken.getName());
-            ps.setString(3, mcpToken.getToken());
+        jdbcTemplate.update(
+                connection -> {
+                    PreparedStatement ps = connection.prepareStatement(sql, new String[] {"id"});
+                    ps.setString(1, mcpToken.getUserId());
+                    ps.setString(2, mcpToken.getName());
+                    ps.setString(3, mcpToken.getToken());
 
-            return ps;
-        }, keyHolder);
+                    return ps;
+                },
+                keyHolder);
     }
 
     public record PaginatedMcpToken(List<McpToken> mcpTokens, int totalCount) {}
@@ -57,7 +56,8 @@ public class McpTokenRepository {
         String baseQuery = " FROM mcp_tokens WHERE user_id = ?";
         params.add(userId);
 
-        if (paginationRequest.getQuery() != null && !paginationRequest.getQuery().isBlank()) {
+        if (paginationRequest.getQuery() != null
+                && !paginationRequest.getQuery().isBlank()) {
             baseQuery += " AND name LIKE ?";
             params.add("%" + paginationRequest.getQuery() + "%");
         }

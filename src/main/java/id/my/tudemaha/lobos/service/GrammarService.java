@@ -15,20 +15,16 @@ import id.my.tudemaha.lobos.model.Grammar;
 import id.my.tudemaha.lobos.repository.CollectionRepository;
 import id.my.tudemaha.lobos.repository.GrammarRepository;
 import id.my.tudemaha.lobos.utils.Pagination;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
+import org.springframework.stereotype.Service;
 
 @Service
 public class GrammarService {
     private final GrammarRepository grammarRepository;
     private final CollectionRepository collectionRepository;
 
-    public GrammarService(
-            GrammarRepository grammarRepository,
-            CollectionRepository collectionRepository
-    ) {
+    public GrammarService(GrammarRepository grammarRepository, CollectionRepository collectionRepository) {
         this.grammarRepository = grammarRepository;
         this.collectionRepository = collectionRepository;
     }
@@ -67,26 +63,19 @@ public class GrammarService {
     }
 
     public GrammarList getGrammarsByCollectionId(
-            String collectionId,
-            String userId,
-            PaginationRequest paginationRequest
-    ) {
+            String collectionId, String userId, PaginationRequest paginationRequest) {
         checkCollectionAccess(collectionId, userId);
 
         PaginationRequest validPaginationRequest = Pagination.buildPaginationRequest(paginationRequest);
-        GrammarRepository.PaginatedGrammar paginatedGrammar = grammarRepository
-                .findAllByCollectionId(collectionId, validPaginationRequest);
+        GrammarRepository.PaginatedGrammar paginatedGrammar =
+                grammarRepository.findAllByCollectionId(collectionId, validPaginationRequest);
 
-        List<GrammarData> grammarData = paginatedGrammar.grammars()
-                .stream()
-                .map(GrammarMapper::toDto)
-                .toList();
+        List<GrammarData> grammarData =
+                paginatedGrammar.grammars().stream().map(GrammarMapper::toDto).toList();
 
         PaginationResponse paginationResponse = new PaginationResponse();
         paginationResponse.setPage(validPaginationRequest.getPage());
-        paginationResponse.setTotalPage(
-                Math.ceilDiv(paginatedGrammar.totalCount(), paginationRequest.getPerPage())
-        );
+        paginationResponse.setTotalPage(Math.ceilDiv(paginatedGrammar.totalCount(), paginationRequest.getPerPage()));
 
         GrammarList grammarList = new GrammarList();
         grammarList.setGrammars(grammarData);

@@ -3,18 +3,17 @@ package id.my.tudemaha.lobos.repository;
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
 import id.my.tudemaha.lobos.exception.NotFoundException;
 import id.my.tudemaha.lobos.model.Grammar;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Repository;
-
 import java.sql.PreparedStatement;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public class GrammarRepository {
@@ -32,28 +31,28 @@ public class GrammarRepository {
             rs.getBoolean("is_starred"),
             rs.getString("collection_id"),
             rs.getObject("created_at", LocalDateTime.class),
-            rs.getObject("updated_at", LocalDateTime.class)
-    );
+            rs.getObject("updated_at", LocalDateTime.class));
 
     public void insert(Grammar grammar) {
-        String sql = "INSERT INTO grammars (word, meaning, example, collection_id)"+
-                " VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO grammars (word, meaning, example, collection_id)" + " VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
-            ps.setString(1, grammar.getWord());
-            ps.setString(2, grammar.getMeaning());
-            ps.setString(4, grammar.getCollectionId());
+        jdbcTemplate.update(
+                connection -> {
+                    PreparedStatement ps = connection.prepareStatement(sql, new String[] {"id"});
+                    ps.setString(1, grammar.getWord());
+                    ps.setString(2, grammar.getMeaning());
+                    ps.setString(4, grammar.getCollectionId());
 
-            if(grammar.getExample() != null) {
-                ps.setString(3, grammar.getExample());
-            } else{
-                ps.setNull(3, Types.VARCHAR);
-            }
+                    if (grammar.getExample() != null) {
+                        ps.setString(3, grammar.getExample());
+                    } else {
+                        ps.setNull(3, Types.VARCHAR);
+                    }
 
-            return ps;
-        }, keyHolder);
+                    return ps;
+                },
+                keyHolder);
     }
 
     public record PaginatedGrammar(List<Grammar> grammars, int totalCount) {}
@@ -67,7 +66,8 @@ public class GrammarRepository {
         String baseQuery = " FROM grammars WHERE collection_id = ?";
         params.add(collectionId);
 
-        if (paginationRequest.getQuery() != null && !paginationRequest.getQuery().isBlank()) {
+        if (paginationRequest.getQuery() != null
+                && !paginationRequest.getQuery().isBlank()) {
             baseQuery += " AND (word LIKE ? OR meaning LIKE ?)";
             params.add("%" + paginationRequest.getQuery() + "%");
             params.add("%" + paginationRequest.getQuery() + "%");
@@ -92,7 +92,7 @@ public class GrammarRepository {
 
     public void toggleStarred(String collectionId) {
         Optional<Grammar> grammarOpt = findById(collectionId);
-        if(grammarOpt.isEmpty()) {
+        if (grammarOpt.isEmpty()) {
             throw new NotFoundException();
         }
 
@@ -103,18 +103,8 @@ public class GrammarRepository {
 
     public void update(Grammar grammar) {
         String sql = "UPDATE grammars SET word = ?, meaning = ?, example = ? WHERE id = ?";
-        Object[] params = new Object[] {
-            grammar.getWord(),
-            grammar.getMeaning(),
-            grammar.getExample(),
-            grammar.getId()
-        };
-        int[] types = new int[] {
-            Types.VARCHAR,
-            Types.VARCHAR,
-            Types.VARCHAR,
-            Types.VARCHAR
-        };
+        Object[] params = new Object[] {grammar.getWord(), grammar.getMeaning(), grammar.getExample(), grammar.getId()};
+        int[] types = new int[] {Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR};
         jdbcTemplate.update(sql, params, types);
     }
 
