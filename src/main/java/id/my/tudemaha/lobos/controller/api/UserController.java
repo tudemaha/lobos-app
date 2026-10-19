@@ -54,6 +54,20 @@ public class UserController {
         return ResponseEntity.ok(HttpResponse.success());
     }
 
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Request password reset")
+    public ResponseEntity<HttpResponse<Void>> forgotPassword(@Valid @RequestBody UpdateEmail email) {
+        userService.forgotPassword(email.getEmail());
+        return ResponseEntity.ok(HttpResponse.success());
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset user's password")
+    public ResponseEntity<HttpResponse<Void>> resetPassword(@Valid @RequestBody ResetPassword resetPassword) {
+        userService.resetPassword(resetPassword);
+        return ResponseEntity.ok(HttpResponse.success());
+    }
+
     @PostMapping("/refresh")
     @Operation(summary = "Generate new access token from refresh token")
     public ResponseEntity<HttpResponse<Token>> refreshToken(@Valid @RequestBody RefreshRequest refreshRequest) {

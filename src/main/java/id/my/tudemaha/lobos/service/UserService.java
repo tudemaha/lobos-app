@@ -103,32 +103,38 @@ public class UserService {
         EmailVerificationToken emailVerificationToken = emailVerificationTokenRepository.findByTokenHash(hashToken)
                 .orElseThrow(() -> new InvalidTokenException("invalid or expired verification token"));
 
-        if (emailVerificationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new InvalidTokenException("invalid or expired verification token");
-        }
-        if (emailVerificationToken.getUsedAt() != null) {
+        if (
+                emailVerificationToken.getExpiresAt().isBefore(LocalDateTime.now()) ||
+                emailVerificationToken.getUsedAt() != null
+        ) {
             throw new InvalidTokenException("invalid or expired verification token");
         }
 
         User user = userRepository.findById(emailVerificationToken.getUserId())
-                        .orElseThrow(() -> new InvalidTokenException("invalid or expired verification token"));
-        user.setEmailVerifiedAt(LocalDateTime.now());
+                .orElseThrow(() -> new InvalidTokenException("invalid or expired verification token"));
 
-        if ("CHANGE_EMAIL".equals(emailVerificationToken.getPurpose())) {
-            if (user.getPendingEmail() == null) {
-                throw new InvalidTokenException("No pending email change found");
-            }
+        switch (emailVerificationToken.getPurpose()) {
+            case "REGISTER":
+                user.setEmailVerifiedAt(LocalDateTime.now());
+                break;
+            case "CHANGE_EMAIL":
+                if (user.getPendingEmail() == null) {
+                    throw new InvalidTokenException("No pending email change found");
+                }
 
-            userRepository
-                .findByEmail(user.getPendingEmail())
-                .ifPresent(checkUser -> {
-                    throw new DuplicateEmailException(user.getPendingEmail());
-                });
+                userRepository
+                        .findByEmail(user.getPendingEmail())
+                        .ifPresent(checkUser -> {
+                            throw new DuplicateEmailException(user.getPendingEmail());
+                        });
 
-            user.setEmail(user.getPendingEmail());
-            user.setPendingEmail(null);
-            persistentTokenRepository.removeUserTokens(user.getId());
-            refreshTokenService.revokeAll(emailVerificationToken.getUserId());
+                user.setEmail(user.getPendingEmail());
+                user.setPendingEmail(null);
+                persistentTokenRepository.removeUserTokens(user.getId());
+                refreshTokenService.revokeAll(emailVerificationToken.getUserId());
+                break;
+            default:
+                throw new InvalidTokenException("invalid or expired verification token");
         }
 
         userRepository.update(user);
@@ -143,6 +149,48 @@ public class UserService {
             String rawToken = generateAndSaveToken(user.getId(), "REGISTER");
             emailService.sendEmail(user.getEmail(), "REGISTER", user.getFirstName(), rawToken);
         }
+    }
+
+    public void forgotPassword(String email) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            String rawToken = generateAndSaveToken(user.getId(), "FORGET");
+            emailService.sendEmail(user.getEmail(), "FORGET", user.getFirstName(), rawToken);
+        }
+    }
+
+    @Transactional
+    public void resetPassword(ResetPassword resetPassword) {
+        if (!resetPassword.getPassword().equals(resetPassword.getConfirmPassword())) {
+            throw new IllegalArgumentException("Password and password confirmation do not match");
+        }
+
+        String hashToken = Hasher.hashToken(resetPassword.getToken());
+        EmailVerificationToken emailVerificationToken = emailVerificationTokenRepository.findByTokenHash(hashToken)
+                .orElseThrow(() -> new InvalidTokenException("invalid or expired reset password token"));
+
+        if (
+                emailVerificationToken.getUsedAt() != null ||
+                emailVerificationToken.getExpiresAt().isBefore(LocalDateTime.now())
+        ) {
+            throw new InvalidTokenException("invalid or expired reset password token");
+        }
+
+        if (!"FORGET".equals(emailVerificationToken.getPurpose())) {
+            throw new InvalidTokenException("invalid or expired reset password token");
+        }
+
+
+        User user = userRepository.findById(emailVerificationToken.getUserId())
+                .orElseThrow(() -> new InvalidTokenException("invalid or expired reset password token"));
+        user.setPassword(Hasher.hashPassword(resetPassword.getPassword()));
+        userRepository.update(user);
+        emailVerificationTokenRepository.markAsUsed(emailVerificationToken.getId());
+
+        persistentTokenRepository.removeUserTokens(user.getId());
+        refreshTokenService.revokeAll(user.getId());
     }
 
     public Token refresh(RefreshRequest refreshRequest) {

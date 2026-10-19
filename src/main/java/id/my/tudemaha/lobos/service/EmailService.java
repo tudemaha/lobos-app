@@ -32,15 +32,13 @@ public class EmailService {
 
     @Async
     public void sendEmail(String to, String purpose, String firstName, String rawToken) {
-        String verificationUrl = baseUrl + "/verify-email?t=" + rawToken;
-
         Context context = new Context();
-        context.setVariable("verificationUrl", verificationUrl);
-
         StringBuilder subject = new StringBuilder();
+        StringBuilder verificationUrl = new StringBuilder();
 
         switch (purpose) {
             case "CHANGE_EMAIL":
+                verificationUrl.append(baseUrl).append("/verify-email?t=").append(rawToken);
                 subject.append("Confirm your new email address for Lobos");
                 context.setVariable("title", subject.toString());
                 context.setVariable("heading", "Confirm your new email address");
@@ -49,6 +47,7 @@ public class EmailService {
                 context.setVariable("buttonText", "Confirm Email Change");
                 break;
             case "REGISTER":
+                verificationUrl.append(baseUrl).append("/verify-email?t=").append(rawToken);
                 subject.append("Verify your Lobos account");
                 context.setVariable("title", subject.toString());
                 context.setVariable("heading", "Welcome to Lobos, " + firstName + "!");
@@ -57,7 +56,18 @@ public class EmailService {
                         " your vocabulary and grammar notes.");
                 context.setVariable("buttonText", "Verify Email");
                 break;
+            case "FORGET":
+                verificationUrl.append(baseUrl).append("/reset-password?t=").append(rawToken);
+                subject.append("Reset your Lobos password");
+                context.setVariable("title", subject.toString());
+                context.setVariable("heading", "Reset your password");
+                context.setVariable("message", "Hi " + firstName + ", we received a request" +
+                        " to reset your Lobos account password. Click below to choose a new password.");
+                context.setVariable("buttonText", "Reset Password");
+                break;
         }
+
+        context.setVariable("verificationUrl", verificationUrl.toString());
 
         String htmlContent = templateEngine.process("mail/verification", context);
         sendHtmlEmail(to, subject.toString(), htmlContent);
