@@ -140,7 +140,7 @@ public class SecurityConfig {
             String message = (authError != null) ? authError : "authentication required";
 
             response.getWriter().write(objectMapper.writeValueAsString(
-                    HttpResponse.error("unauthorized", List.of(message))
+                    HttpResponse.error("UNAUTHORIZED", List.of(message))
             ));
         };
     }
@@ -152,7 +152,7 @@ public class SecurityConfig {
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
             response.getWriter().write(objectMapper.writeValueAsString(
-                    HttpResponse.error("forbidden access", List.of("access denied"))
+                    HttpResponse.error("FORBIDDEN", List.of("access denied"))
             ));
         };
     }

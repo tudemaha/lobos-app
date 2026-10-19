@@ -37,7 +37,7 @@ public class GrammarController {
         GrammarDetail grammarDetail = grammarService.createGrammar(createGrammar, collectionId, user.getId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(HttpResponse.success("grammar created successfully", grammarDetail));
+                .body(HttpResponse.success(grammarDetail));
     }
 
     @GetMapping
@@ -53,7 +53,7 @@ public class GrammarController {
                 paginationRequest
         );
 
-        return ResponseEntity.ok(HttpResponse.success("successfully get grammars", grammarList));
+        return ResponseEntity.ok(HttpResponse.success(grammarList));
     }
 
     @GetMapping("/{grammarId}")
@@ -64,7 +64,7 @@ public class GrammarController {
             @AuthenticationPrincipal User user
     ) {
         GrammarDetail grammarDetail = grammarService.getGrammarById(grammarId, collectionId, user.getId());
-        return ResponseEntity.ok(HttpResponse.success("successfully get grammar", grammarDetail));
+        return ResponseEntity.ok(HttpResponse.success(grammarDetail));
     }
 
     @PutMapping("/{grammarId}")
@@ -76,7 +76,7 @@ public class GrammarController {
             @AuthenticationPrincipal User user
     ) {
         grammarService.update(updateGrammar, grammarId, collectionId, user.getId());
-        return ResponseEntity.ok(HttpResponse.success("grammar updated successfully", null));
+        return ResponseEntity.ok(HttpResponse.success());
     }
 
     @PatchMapping("/{grammarId}")
@@ -88,7 +88,7 @@ public class GrammarController {
             @AuthenticationPrincipal User user
     ) {
         grammarService.toggleStarred(grammarId, collectionId, user.getId(), starGrammar);
-        return ResponseEntity.ok(HttpResponse.success("grammar star toggled successfully", null));
+        return ResponseEntity.ok(HttpResponse.success());
     }
 
     @DeleteMapping("/{grammarId}")
@@ -99,6 +99,6 @@ public class GrammarController {
             @AuthenticationPrincipal User user
     ) {
         grammarService.delete(grammarId, collectionId, user.getId());
-        return ResponseEntity.ok(HttpResponse.success("grammar deleted successfully", null));
+        return ResponseEntity.ok(HttpResponse.success());
     }
 }

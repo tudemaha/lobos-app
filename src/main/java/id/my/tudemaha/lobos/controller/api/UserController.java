@@ -30,49 +30,49 @@ public class UserController {
     @Operation(summary = "Register endpoint")
     public ResponseEntity<HttpResponse<Void>> registerUser(@Valid @RequestBody UserRegister userRegister) {
         userService.register(userRegister);
-        return ResponseEntity.status(HttpStatus.CREATED).body(HttpResponse.success("user registered successfully", null));
+        return ResponseEntity.status(HttpStatus.CREATED).body(HttpResponse.success());
     }
 
     @PostMapping("/login")
     @Operation(summary = "Login endpoint")
     public ResponseEntity<HttpResponse<Token>> login(@Valid @RequestBody UserLogin userLogin) {
         Token token = userService.login(userLogin);
-        return ResponseEntity.ok(HttpResponse.success("login successfully", token));
+        return ResponseEntity.ok(HttpResponse.success(token));
     }
 
     @PostMapping("/verify-email")
     @Operation(summary = "Verify new created account or email changes")
     public ResponseEntity<HttpResponse<Void>> verifyEmail(@RequestParam String t) {
         userService.verifyEmail(t);
-        return ResponseEntity.ok(HttpResponse.success("email verified successfully", null));
+        return ResponseEntity.ok(HttpResponse.success());
     }
 
     @PostMapping("/resend-verification")
     @Operation(summary = "Resend email verification")
     public ResponseEntity<HttpResponse<Void>> resendVerification(@Valid @RequestBody UpdateEmail email) {
         userService.resendEmailVerification(email.getEmail());
-        return ResponseEntity.ok(HttpResponse.success("email verification resent successfully", null));
+        return ResponseEntity.ok(HttpResponse.success());
     }
 
     @PostMapping("/refresh")
     @Operation(summary = "Generate new access token from refresh token")
     public ResponseEntity<HttpResponse<Token>> refreshToken(@Valid @RequestBody RefreshRequest refreshRequest) {
         Token token = userService.refresh(refreshRequest);
-        return ResponseEntity.ok(HttpResponse.success("refresh successfully", token));
+        return ResponseEntity.ok(HttpResponse.success(token));
     }
 
     @PostMapping("/logout")
     @Operation(summary = "Logout from current device")
     public ResponseEntity<HttpResponse<Void>> logout(@Valid @RequestBody RefreshRequest refreshRequest) {
         refreshTokenService.revoke(refreshRequest.getRefreshToken());
-        return ResponseEntity.ok(HttpResponse.success("logout successfully", null));
+        return ResponseEntity.ok(HttpResponse.success());
     }
 
     @PostMapping("/logout-all")
     @Operation(summary = "Logout from all device")
     public ResponseEntity<HttpResponse<Void>> logoutAll(@AuthenticationPrincipal User user) {
         refreshTokenService.revokeAll(user);
-        return ResponseEntity.ok(HttpResponse.success("logout from all device successfully", null));
+        return ResponseEntity.ok(HttpResponse.success());
     }
 
     @PutMapping("/update")
@@ -82,7 +82,7 @@ public class UserController {
             @AuthenticationPrincipal User user
             ) {
         userService.update(userUpdate, user.getId());
-        return ResponseEntity.ok(HttpResponse.success("profile updated successfully", null));
+        return ResponseEntity.ok(HttpResponse.success());
     }
 
     @PatchMapping("/email")
@@ -92,7 +92,7 @@ public class UserController {
             @AuthenticationPrincipal User user
     ) {
         userService.updateEmail(updateEmail, user.getId());
-        return ResponseEntity.ok(HttpResponse.success("email updated successfully", null));
+        return ResponseEntity.ok(HttpResponse.success());
     }
 
     @PatchMapping("/password")
@@ -102,13 +102,13 @@ public class UserController {
             @AuthenticationPrincipal User user
             ) {
         userService.updatePassword(updatePassword, user.getId());
-        return ResponseEntity.ok(HttpResponse.success("password updated successfully", null));
+        return ResponseEntity.ok(HttpResponse.success());
     }
 
     @DeleteMapping()
     @Operation(summary = "Delete a user's account")
     public ResponseEntity<HttpResponse<Void>> deleteUser(@AuthenticationPrincipal User user) {
         userService.delete(user.getId());
-        return ResponseEntity.ok(HttpResponse.success("user deleted successfully", null));
+        return ResponseEntity.ok(HttpResponse.success());
     }
 }

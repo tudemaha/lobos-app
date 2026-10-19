@@ -37,10 +37,7 @@ public class McpTokenController {
         );
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(HttpResponse.success(
-                        "token created successfully",
-                        createTokenResponse
-                ));
+                .body(HttpResponse.success(createTokenResponse));
     }
 
     @GetMapping
@@ -55,7 +52,7 @@ public class McpTokenController {
         );
 
         return ResponseEntity
-                .ok(HttpResponse.success("successfully get MCP tokens", mcpTokenList));
+                .ok(HttpResponse.success(mcpTokenList));
     }
 
     @PatchMapping("/{id}")
@@ -67,7 +64,7 @@ public class McpTokenController {
     ) {
         mcpTokenService.updateName(createMcpToken, id, user.getId());
         return ResponseEntity
-                .ok(HttpResponse.success("MCP token's name updated successfully", null));
+                .ok(HttpResponse.success());
     }
 
     @DeleteMapping("/{id}")
@@ -78,6 +75,6 @@ public class McpTokenController {
     ) {
         mcpTokenService.delete(id, user.getId());
         return ResponseEntity
-                .ok(HttpResponse.success("MCP token deleted successfully", null));
+                .ok(HttpResponse.success());
     }
 }

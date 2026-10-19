@@ -30,7 +30,7 @@ public class SyncController {
             @RequestParam(defaultValue = "200") int limit,
             @AuthenticationPrincipal User user
     ) {
-        SyncChangesData data = syncService.getChanges(user.getId(),  cursor, limit);
-        return ResponseEntity.ok(HttpResponse.success("sync changes fetched successfully", data));
+        SyncChangesData data = syncService.getChanges(user.getId(), cursor, limit);
+        return ResponseEntity.ok(HttpResponse.success(data));
     }
 }

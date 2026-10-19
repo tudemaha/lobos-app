@@ -34,7 +34,7 @@ public class CollectionController {
         CollectionData collectionData = collectionService.createCollection(createCollection, user.getId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(HttpResponse.success("collection created successfully", collectionData));
+                .body(HttpResponse.success(collectionData));
     }
 
     @GetMapping
@@ -48,7 +48,7 @@ public class CollectionController {
                 paginationRequest
         );
         return ResponseEntity
-                .ok(HttpResponse.success("successfully get collections", collectionList));
+                .ok(HttpResponse.success(collectionList));
     }
 
     @PutMapping("/{id}")
@@ -60,7 +60,7 @@ public class CollectionController {
     ) {
         collectionService.update(createCollection, id, user.getId());
         return ResponseEntity
-                .ok(HttpResponse.success("collection updated successfully", null));
+                .ok(HttpResponse.success());
     }
 
     @DeleteMapping("/{id}")
@@ -71,6 +71,6 @@ public class CollectionController {
     ) {
         collectionService.delete(id, user.getId());
         return ResponseEntity
-                .ok(HttpResponse.success("collection deleted successfully", null));
+                .ok(HttpResponse.success());
     }
 }
