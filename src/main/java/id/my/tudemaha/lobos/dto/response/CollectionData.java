@@ -1,8 +1,7 @@
 package id.my.tudemaha.lobos.dto.response;
 
-import lombok.Data;
-
 import java.time.LocalDateTime;
+import lombok.Data;
 
 @Data
 public class CollectionData {
@@ -10,4 +9,5 @@ public class CollectionData {
     private String name;
     private String color;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

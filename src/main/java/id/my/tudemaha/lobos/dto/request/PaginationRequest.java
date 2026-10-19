@@ -8,4 +8,3 @@ public class PaginationRequest {
     private Integer perPage;
     private String query;
 }
-

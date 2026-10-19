@@ -8,6 +8,7 @@ import id.my.tudemaha.lobos.model.Grammar;
 public class GrammarMapper {
     public static Grammar toEntity(CreateGrammar request) {
         Grammar grammar = new Grammar();
+        grammar.setId(request.getId());
         grammar.setWord(request.getWord());
         grammar.setMeaning(request.getMeaning());
         grammar.setExample(request.getExample());
@@ -20,8 +21,10 @@ public class GrammarMapper {
         grammar.setId(entity.getId());
         grammar.setWord(entity.getWord());
         grammar.setMeaning(entity.getMeaning());
-        grammar.setCreatedAt(entity.getCreatedAt());
+        grammar.setExample(entity.getExample());
         grammar.setStarred(entity.isStarred());
+        grammar.setCreatedAt(entity.getCreatedAt());
+        grammar.setUpdatedAt(entity.getUpdatedAt());
 
         return grammar;
     }

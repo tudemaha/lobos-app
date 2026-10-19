@@ -7,6 +7,7 @@ import id.my.tudemaha.lobos.model.Collection;
 public class CollectionMapper {
     public static Collection toEntity(CreateCollection request) {
         Collection collection = new Collection();
+        collection.setId(request.getId());
         collection.setName(request.getName());
         collection.setColor(request.getColor());
 
@@ -19,6 +20,7 @@ public class CollectionMapper {
         collectionData.setName(collection.getName());
         collectionData.setColor(collection.getColor());
         collectionData.setCreatedAt(collection.getCreatedAt());
+        collectionData.setUpdatedAt(collection.getUpdatedAt());
 
         return collectionData;
     }

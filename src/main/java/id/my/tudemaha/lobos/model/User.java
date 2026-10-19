@@ -1,15 +1,14 @@
 package id.my.tudemaha.lobos.model;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
 
 @Data
 @NoArgsConstructor
@@ -19,8 +18,12 @@ public class User implements UserDetails {
     private String firstName;
     private String lastName;
     private String email;
+    private String pendingEmail;
+
     @ToString.Exclude
     private String password;
+
+    private LocalDateTime emailVerifiedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -35,14 +38,23 @@ public class User implements UserDetails {
     }
 
     @Override
-    public boolean isAccountNonExpired() { return true; };
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+    ;
 
     @Override
-    public boolean isAccountNonLocked() { return true; }
+    public boolean isAccountNonLocked() {
+        return true;
+    }
 
     @Override
-    public boolean isCredentialsNonExpired() { return true; }
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() {
+        return true;
+    }
 }

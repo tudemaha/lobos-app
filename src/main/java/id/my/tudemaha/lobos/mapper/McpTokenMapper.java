@@ -21,10 +21,7 @@ public class McpTokenMapper {
 
         String token = mcpToken.getToken();
         int tokenLength = token.length();
-        mcpTokenData.setToken(token.substring(0, 5)
-                        + "******"
-                        + token.substring(tokenLength - 5)
-        );
+        mcpTokenData.setToken(token.substring(0, 5) + "******" + token.substring(tokenLength - 5));
 
         return mcpTokenData;
     }

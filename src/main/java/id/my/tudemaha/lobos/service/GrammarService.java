@@ -2,11 +2,13 @@ package id.my.tudemaha.lobos.service;
 
 import id.my.tudemaha.lobos.dto.request.CreateGrammar;
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
+import id.my.tudemaha.lobos.dto.request.StarGrammar;
 import id.my.tudemaha.lobos.dto.request.UpdateGrammar;
 import id.my.tudemaha.lobos.dto.response.GrammarData;
 import id.my.tudemaha.lobos.dto.response.GrammarDetail;
 import id.my.tudemaha.lobos.dto.response.GrammarList;
 import id.my.tudemaha.lobos.dto.response.PaginationResponse;
+import id.my.tudemaha.lobos.exception.DuplicateResourceException;
 import id.my.tudemaha.lobos.exception.ForbiddenAccessException;
 import id.my.tudemaha.lobos.exception.NotFoundException;
 import id.my.tudemaha.lobos.mapper.GrammarMapper;
@@ -15,20 +17,17 @@ import id.my.tudemaha.lobos.model.Grammar;
 import id.my.tudemaha.lobos.repository.CollectionRepository;
 import id.my.tudemaha.lobos.repository.GrammarRepository;
 import id.my.tudemaha.lobos.utils.Pagination;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class GrammarService {
     private final GrammarRepository grammarRepository;
     private final CollectionRepository collectionRepository;
 
-    public GrammarService(
-            GrammarRepository grammarRepository,
-            CollectionRepository collectionRepository
-    ) {
+    public GrammarService(GrammarRepository grammarRepository, CollectionRepository collectionRepository) {
         this.grammarRepository = grammarRepository;
         this.collectionRepository = collectionRepository;
     }
@@ -45,13 +44,13 @@ public class GrammarService {
         }
     }
 
-    private Grammar checkGrammarAccess(String grammarId, String collectioinId, String userId) {
+    private Grammar checkGrammarAccess(String grammarId, String collectionId, String userId) {
         Optional<Grammar> grammarOpt = grammarRepository.findById(grammarId);
         if (grammarOpt.isEmpty()) {
             throw new NotFoundException("grammar with id " + grammarId + " not found");
         }
         Grammar grammar = grammarOpt.get();
-        if (!grammar.getCollectionId().equals(collectioinId)) {
+        if (!grammar.getCollectionId().equals(collectionId)) {
             throw new ForbiddenAccessException("forbidden access to grammar resource");
         }
 
@@ -59,34 +58,43 @@ public class GrammarService {
         return grammar;
     }
 
-    public void createGrammar(CreateGrammar createGrammar, String collectionId, String userId) {
+    public GrammarDetail createGrammar(CreateGrammar createGrammar, String collectionId, String userId) {
         checkCollectionAccess(collectionId, userId);
+
+        if (createGrammar.getId() != null && !createGrammar.getId().isBlank()) {
+            Optional<Grammar> grammarOpt = grammarRepository.findById(createGrammar.getId());
+            if (grammarOpt.isPresent()) {
+                Grammar grammar = grammarOpt.get();
+                if (!grammar.getCollectionId().equals(collectionId)) {
+                    throw new DuplicateResourceException("Resource with this ID already exists");
+                }
+                return GrammarMapper.toDetailDto(grammar);
+            }
+        } else {
+            createGrammar.setId(UUID.randomUUID().toString());
+        }
+
         Grammar grammar = GrammarMapper.toEntity(createGrammar);
         grammar.setCollectionId(collectionId);
         grammarRepository.insert(grammar);
+
+        return GrammarMapper.toDetailDto(grammar);
     }
 
     public GrammarList getGrammarsByCollectionId(
-            String collectionId,
-            String userId,
-            PaginationRequest paginationRequest
-    ) {
+            String collectionId, String userId, PaginationRequest paginationRequest) {
         checkCollectionAccess(collectionId, userId);
 
         PaginationRequest validPaginationRequest = Pagination.buildPaginationRequest(paginationRequest);
-        GrammarRepository.PaginatedGrammar paginatedGrammar = grammarRepository
-                .findAllByCollectionId(collectionId, validPaginationRequest);
+        GrammarRepository.PaginatedGrammar paginatedGrammar =
+                grammarRepository.findAllByCollectionId(collectionId, validPaginationRequest);
 
-        List<GrammarData> grammarData = paginatedGrammar.grammars()
-                .stream()
-                .map(GrammarMapper::toDto)
-                .toList();
+        List<GrammarData> grammarData =
+                paginatedGrammar.grammars().stream().map(GrammarMapper::toDto).toList();
 
         PaginationResponse paginationResponse = new PaginationResponse();
         paginationResponse.setPage(validPaginationRequest.getPage());
-        paginationResponse.setTotalPage(
-                Math.ceilDiv(paginatedGrammar.totalCount(), paginationRequest.getPerPage())
-        );
+        paginationResponse.setTotalPage(Math.ceilDiv(paginatedGrammar.totalCount(), paginationRequest.getPerPage()));
 
         GrammarList grammarList = new GrammarList();
         grammarList.setGrammars(grammarData);
@@ -110,6 +118,11 @@ public class GrammarService {
     public void toggleStarred(String grammarId, String collectionId, String userId) {
         Grammar grammar = checkGrammarAccess(grammarId, collectionId, userId);
         grammarRepository.toggleStarred(grammar.getId());
+    }
+
+    public void toggleStarred(String grammarId, String collectionId, String userId, StarGrammar starGrammar) {
+        Grammar grammar = checkGrammarAccess(grammarId, collectionId, userId);
+        grammarRepository.toggleStarred(grammar.getId(), starGrammar.isStarred());
     }
 
     public void delete(String grammarId, String collectionId, String userId) {

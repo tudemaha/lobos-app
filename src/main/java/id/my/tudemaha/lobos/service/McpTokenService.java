@@ -14,12 +14,11 @@ import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.repository.McpTokenRepository;
 import id.my.tudemaha.lobos.repository.UserRepository;
 import id.my.tudemaha.lobos.utils.Pagination;
-import org.springframework.stereotype.Service;
-
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.stereotype.Service;
 
 @Service
 public class McpTokenService {
@@ -27,10 +26,7 @@ public class McpTokenService {
     private final UserRepository userRepository;
     private final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    public McpTokenService(
-            McpTokenRepository mcpTokenRepository,
-            UserRepository userRepository
-    ) {
+    public McpTokenService(McpTokenRepository mcpTokenRepository, UserRepository userRepository) {
         this.mcpTokenRepository = mcpTokenRepository;
         this.userRepository = userRepository;
     }
@@ -38,7 +34,7 @@ public class McpTokenService {
     private McpToken isTokenEmpty(String id) {
         Optional<McpToken> mcpTokenOpt = mcpTokenRepository.getMcpTokenById(id);
         if (mcpTokenOpt.isEmpty()) {
-            throw new InvalidTokenException();
+            throw new InvalidTokenException("invalid MCP token");
         }
 
         return mcpTokenOpt.get();
@@ -50,11 +46,7 @@ public class McpTokenService {
 
         byte[] tokenBytes = new byte[32];
         SECURE_RANDOM.nextBytes(tokenBytes);
-        mcpToken.setToken(Base64
-                .getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(tokenBytes)
-        );
+        mcpToken.setToken(Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes));
 
         mcpTokenRepository.insert(mcpToken);
 
@@ -67,13 +59,13 @@ public class McpTokenService {
     public User authenticate(String token) {
         Optional<McpToken> mcpTokenOpt = mcpTokenRepository.getMcpTokenByToken(token);
         if (mcpTokenOpt.isEmpty()) {
-            throw new InvalidTokenException();
+            throw new InvalidTokenException("invalid MCP token");
         }
 
         McpToken mcpToken = mcpTokenOpt.get();
         Optional<User> userOpt = userRepository.findById(mcpToken.getUserId());
         if (userOpt.isEmpty()) {
-            throw new InvalidTokenException();
+            throw new InvalidTokenException("invalid MCP token");
         }
 
         mcpTokenRepository.updateLastUsed(mcpToken);
@@ -83,18 +75,17 @@ public class McpTokenService {
 
     public McpTokenList getMcpTokensByUserId(String userId, PaginationRequest paginationRequest) {
         PaginationRequest validPaginationRequest = Pagination.buildPaginationRequest(paginationRequest);
-        McpTokenRepository.PaginatedMcpToken paginatedMcpToken = mcpTokenRepository.findAllByUserId(userId, validPaginationRequest);
+        McpTokenRepository.PaginatedMcpToken paginatedMcpToken =
+                mcpTokenRepository.findAllByUserId(userId, validPaginationRequest);
 
-        List<McpTokenData> mcpTokenData = paginatedMcpToken.mcpTokens()
-                .stream()
+        List<McpTokenData> mcpTokenData = paginatedMcpToken.mcpTokens().stream()
                 .map(McpTokenMapper::toDto)
                 .toList();
 
         PaginationResponse paginationResponse = new PaginationResponse();
         paginationResponse.setPage(validPaginationRequest.getPage());
         paginationResponse.setTotalPage(
-                Math.ceilDiv(paginatedMcpToken.totalCount(), validPaginationRequest.getPerPage())
-        );
+                Math.ceilDiv(paginatedMcpToken.totalCount(), validPaginationRequest.getPerPage()));
 
         McpTokenList mcpTokenList = new McpTokenList();
         mcpTokenList.setMcpTokens(mcpTokenData);
@@ -115,7 +106,7 @@ public class McpTokenService {
 
     public void delete(String tokenId, String userId) {
         McpToken mcpToken = isTokenEmpty(tokenId);
-        if(!mcpToken.getUserId().equals(userId)) {
+        if (!mcpToken.getUserId().equals(userId)) {
             throw new ForbiddenAccessException("User is not allowed to delete token");
         }
 

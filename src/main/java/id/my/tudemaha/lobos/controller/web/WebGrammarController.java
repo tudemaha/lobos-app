@@ -27,14 +27,9 @@ public class WebGrammarController {
             @AuthenticationPrincipal User user,
             @ModelAttribute PaginationRequest paginationRequest,
             @PathVariable String collectionId,
-            Model model
-    ) {
+            Model model) {
         GrammarList grammarList =
-                grammarService.getGrammarsByCollectionId(
-                        collectionId,
-                        user.getId(),
-                        paginationRequest
-                );
+                grammarService.getGrammarsByCollectionId(collectionId, user.getId(), paginationRequest);
         model.addAttribute("grammarList", grammarList);
 
         return "grammars/index";
@@ -45,14 +40,8 @@ public class WebGrammarController {
             @PathVariable String collectionId,
             @PathVariable String grammarId,
             @AuthenticationPrincipal User user,
-            Model model
-    ) {
-        GrammarDetail grammarDetail =
-                grammarService.getGrammarById(
-                        grammarId,
-                        collectionId,
-                        user.getId()
-                );
+            Model model) {
+        GrammarDetail grammarDetail = grammarService.getGrammarById(grammarId, collectionId, user.getId());
 
         model.addAttribute("grammar", grammarDetail);
         return "grammars/detail";
@@ -62,8 +51,7 @@ public class WebGrammarController {
     public String createGrammars(
             @Valid @ModelAttribute("createGrammar") CreateGrammar createGrammar,
             @AuthenticationPrincipal User user,
-            @PathVariable String collectionId
-    ) {
+            @PathVariable String collectionId) {
         grammarService.createGrammar(createGrammar, collectionId, user.getId());
 
         return "redirect:/collections/" + collectionId + "/grammars";
@@ -74,14 +62,8 @@ public class WebGrammarController {
             @PathVariable String collectionId,
             @PathVariable String grammarId,
             @Valid @ModelAttribute UpdateGrammar updateGrammar,
-            @AuthenticationPrincipal User user
-    ) {
-        grammarService.update(
-                updateGrammar,
-                grammarId,
-                collectionId,
-                user.getId()
-        );
+            @AuthenticationPrincipal User user) {
+        grammarService.update(updateGrammar, grammarId, collectionId, user.getId());
 
         return "redirect:/collections/" + collectionId + "/grammars/" + grammarId;
     }
@@ -91,8 +73,7 @@ public class WebGrammarController {
             @PathVariable String collectionId,
             @PathVariable String grammarId,
             @RequestParam(required = false) String redirectTo,
-            @AuthenticationPrincipal User user
-    ) {
+            @AuthenticationPrincipal User user) {
         grammarService.toggleStarred(grammarId, collectionId, user.getId());
 
         if ("list".equals(redirectTo)) {
@@ -103,10 +84,7 @@ public class WebGrammarController {
 
     @DeleteMapping("{grammarId}")
     public String deleteGrammars(
-            @PathVariable String collectionId,
-            @PathVariable String grammarId,
-            @AuthenticationPrincipal User user
-    ) {
+            @PathVariable String collectionId, @PathVariable String grammarId, @AuthenticationPrincipal User user) {
         grammarService.delete(grammarId, collectionId, user.getId());
 
         return "redirect:/collections/" + collectionId + "/grammars";

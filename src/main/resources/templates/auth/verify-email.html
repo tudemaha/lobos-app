@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::head-extra}, ~{::main-content}, ~{::scripts})}">
+
+<title>Email Verification — Lobos</title>
+
+<th:block th:fragment="head-extra"></th:block>
+
+<th:block th:fragment="main-content">
+<div class="min-h-[calc(100vh-3.5rem-57px)] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md bg-white border border-gray-200 rounded-lg p-8 shadow-sm text-center">
+
+        <!-- Icon: Success -->
+        <div th:if="${success}" class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
+            <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+
+        <!-- Icon: Failure -->
+        <div th:unless="${success}" class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+            <svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </div>
+
+        <!-- Heading -->
+        <h1 class="text-2xl font-semibold text-gray-900 tracking-tight mb-2"
+            th:text="${success} ? 'Email Verified!' : 'Verification Failed'">
+            Email Verification
+        </h1>
+
+        <!-- Message -->
+        <p class="text-gray-600 text-sm mb-6 leading-relaxed" th:text="${message}">
+            Processing verification status...
+        </p>
+
+        <!-- Action: If Success -->
+        <div th:if="${success}" class="mt-6">
+            <a sec:authorize="isAuthenticated()" th:href="@{/profile}" class="btn-primary w-full inline-block text-center font-medium">
+                Back to Profile &amp; Settings
+            </a>
+            <a sec:authorize="!isAuthenticated()" th:href="@{/login}" class="btn-primary w-full inline-block text-center font-medium">
+                Sign In to Your Account
+            </a>
+        </div>
+
+        <!-- Action: If Failure -->
+        <div th:unless="${success}" class="mt-6 space-y-3">
+            <p class="text-xs text-gray-500">Need a new verification link? Sign in to request another or enter your email below:</p>
+            <form th:action="@{/auth/resend-verification}" method="post" class="space-y-3">
+                <input type="email"
+                       name="email"
+                       required
+                       placeholder="you@example.com"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus-pastel transition" />
+                <button type="submit" class="btn-primary w-full text-center font-medium text-sm">
+                    Resend Verification Email
+                </button>
+            </form>
+            <div class="pt-2">
+                <a th:href="@{/login}" class="text-sm pastel-blue hover:underline font-medium">
+                    Back to Sign In
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+</th:block>
+
+<th:block th:fragment="scripts"></th:block>
+</html>
