@@ -20,6 +20,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -48,16 +49,28 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(
-            HttpSecurity http, AuthenticationEntryPoint restAuthenticationEntryPoint) {
+            HttpSecurity http,
+            AuthenticationEntryPoint restAuthenticationEntryPoint,
+            AccessDeniedHandler restAccessDeniedHandler) {
         http.securityMatcher("/api/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/register", "/api/auth/login")
+                .authorizeHttpRequests(auth -> auth.requestMatchers(
+                                "/api/auth/register",
+                                "/api/auth/login",
+                                "/api/auth/refresh",
+                                "/api/auth/logout",
+                                "/api/auth/verify-email",
+                                "/api/auth/resend-verification",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password")
                         .permitAll()
                         .anyRequest()
                         .authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(restAuthenticationEntryPoint));
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler));
 
         return http.build();
     }
@@ -86,9 +99,22 @@ public class SecurityConfig {
         http.csrf(Customizer.withDefaults())
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/", "/register", "/login", "/error")
+                .authorizeHttpRequests(auth -> auth.requestMatchers(
+                                "/",
+                                "/register",
+                                "/login",
+                                "/error",
+                                "/verify-email",
+                                "/forgot-password",
+                                "/reset-password")
                         .permitAll()
-                        .requestMatchers("/auth/register", "/auth/login", "/auth/logout")
+                        .requestMatchers(
+                                "/auth/register",
+                                "/auth/login",
+                                "/auth/logout",
+                                "/auth/resend-verification",
+                                "/auth/forgot-password",
+                                "/auth/reset-password")
                         .permitAll()
                         .requestMatchers(
                                 "/css/**",
@@ -118,11 +144,25 @@ public class SecurityConfig {
     @Bean
     public AuthenticationEntryPoint restAuthenticationEntryPoint(ObjectMapper objectMapper) {
         return (request, response, authException) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+            String authError = (String) request.getAttribute("auth_error");
+            String message = (authError != null) ? authError : "authentication required";
+
+            response.getWriter()
+                    .write(objectMapper.writeValueAsString(HttpResponse.error("UNAUTHORIZED", List.of(message))));
+        };
+    }
+
+    @Bean
+    public AccessDeniedHandler restAccessDeniedHandler(ObjectMapper objectMapper) {
+        return (request, response, accessDeniedException) -> {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
             response.getWriter()
-                    .write(objectMapper.writeValueAsString(
-                            HttpResponse.error("forbidden access", List.of("authentication required"))));
+                    .write(objectMapper.writeValueAsString(HttpResponse.error("FORBIDDEN", List.of("access denied"))));
         };
     }
 

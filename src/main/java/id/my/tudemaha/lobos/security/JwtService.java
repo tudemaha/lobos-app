@@ -5,6 +5,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +20,9 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
 
+    @Value("${jwt.access-ttl:15m}")
+    private Duration accessTtl;
+
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("id", user.getId());
@@ -25,11 +30,12 @@ public class JwtService {
         claims.put("lastName", user.getLastName());
         claims.put("email", user.getEmail());
 
-        long expirationMs = 1000 * 60 * 60;
+        Instant now = Instant.now();
+
         return Jwts.builder()
                 .claims(claims)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(accessTtl)))
                 .signWith(getSigningKey())
                 .compact();
     }

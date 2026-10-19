@@ -17,4 +17,5 @@ public class Grammar {
     private String collectionId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 }

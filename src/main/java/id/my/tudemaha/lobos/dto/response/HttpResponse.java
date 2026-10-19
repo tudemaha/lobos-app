@@ -1,31 +1,37 @@
 package id.my.tudemaha.lobos.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 import lombok.Data;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class HttpResponse<T> {
     private boolean success;
-    private String message;
+    private String code;
     private T data;
     private List<String> errors;
 
-    public HttpResponse(boolean success, String message, T data, List<String> errors) {
+    public HttpResponse(boolean success, String code, T data, List<String> errors) {
         this.success = success;
-        this.message = message;
+        this.code = code;
         this.data = data;
         this.errors = errors;
     }
 
     public static <T> HttpResponse<T> success(T data) {
-        return new HttpResponse<>(true, "request successfully", data, null);
+        return new HttpResponse<>(true, null, data, null);
     }
 
-    public static <T> HttpResponse<T> success(String message, T data) {
-        return new HttpResponse<>(true, message, data, null);
+    public static <T> HttpResponse<T> success() {
+        return new HttpResponse<>(true, null, null, null);
     }
 
-    public static <T> HttpResponse<T> error(String message, List<String> errors) {
-        return new HttpResponse<>(false, message, null, errors);
+    public static <T> HttpResponse<T> error(String code, List<String> errors) {
+        return new HttpResponse<>(false, code, null, errors);
+    }
+
+    public static <T> HttpResponse<T> error(String code, String error) {
+        return new HttpResponse<>(false, code, null, error != null ? List.of(error) : null);
     }
 }

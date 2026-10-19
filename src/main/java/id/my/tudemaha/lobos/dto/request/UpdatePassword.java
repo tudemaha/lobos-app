@@ -16,4 +16,6 @@ public class UpdatePassword {
 
     @NotBlank(message = "confirmNewPassword is required")
     private String confirmNewPassword;
+
+    private boolean withLogoutAll = true;
 }

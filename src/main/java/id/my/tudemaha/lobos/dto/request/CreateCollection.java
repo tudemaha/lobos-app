@@ -7,6 +7,10 @@ import lombok.Data;
 
 @Data
 public class CreateCollection {
+    @Pattern(
+            regexp = "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            message = "id must be a valid UUID")
+    private String id;
 
     @NotBlank(message = "name is required")
     @Size(min = 1, max = 100, message = "name must be between 1 and 100 characters")

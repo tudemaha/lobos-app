@@ -2,6 +2,8 @@ package id.my.tudemaha.lobos.security;
 
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.repository.UserRepository;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,19 +38,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        String id = jwtService.extractId(token);
 
-        if (id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            Optional<User> userOpt = userRepository.findById(id);
-            if (userOpt.isPresent()) {
-                User user = userOpt.get();
-                if (jwtService.isTokenValid(token, user)) {
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+        try {
+            String id = jwtService.extractId(token);
+
+            if (id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                Optional<User> userOpt = userRepository.findById(id);
+                if (userOpt.isPresent()) {
+                    User user = userOpt.get();
+                    if (jwtService.isTokenValid(token, user)) {
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
                 }
             }
+        } catch (ExpiredJwtException e) {
+            request.setAttribute("auth_error", "token_expired");
+        } catch (JwtException | IllegalArgumentException e) {
+            request.setAttribute("auth_error", "token_invalid");
         }
 
         filterChain.doFilter(request, response);

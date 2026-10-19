@@ -8,30 +8,34 @@ A vocabulary and grammar management application built with **Spring Boot**. Lobo
 
 - 📚 **Collections** — Group vocabulary entries into named, color-coded collections
 - 📝 **Grammar Notes** — Store words with their meanings, examples, and star/favorite them
-- 🔐 **Authentication** — Register, log in, update your profile, and log out securely
+- 🔐 **Authentication & Sessions** — Register, log in, refresh token rotation, and multi-device session revocation
+- ✉️ **Email Verification & Password Reset** — Email verification on signup and email change, plus secure token-based password reset flows
+- 🔄 **Offline-First & Delta Sync** — Client-generated UUID support, idempotent mutations, soft deletion, and cursor-based delta sync (`/api/sync`)
 - 🍪 **Remember Me** — Optional persistent login (JDBC-backed, 30-day rotating token) so the web session survives a closed browser
 - 🌐 **Web UI** — Full-featured browser interface built with Thymeleaf and Tailwind CSS
-- 🔌 **REST API** — Stateless JSON API secured with JWT bearer tokens
+- 🔌 **REST API** — Stateless JSON API with standardized error responses (`HttpResponse<T>`) secured with JWT bearer tokens
 - 🤖 **MCP Server** — Remote MCP server (Streamable HTTP) exposing collections and grammars as tools for AI clients, secured with scoped MCP tokens
-- 📄 **Pagination** — Navigate large lists with built-in pagination
+- 📄 **Pagination & Search** — Navigate and search large lists with built-in pagination
 
 ---
 
 ## Tech Stack
 
-| Layer        | Technology                                     |
-| ------------ | ---------------------------------------------- |
-| Language     | Java 21                                        |
-| Framework    | Spring Boot 4.1.0                              |
-| Web / MVC    | Spring Web MVC, Thymeleaf                      |
-| Security     | Spring Security (JWT for API, session for Web) |
-| Database     | MySQL                                          |
-| Persistence  | Spring JDBC (`JdbcTemplate`) — raw SQL, no ORM |
-| Build Tool   | Maven (`./mvnw`)                               |
-| Frontend CSS | Tailwind CSS via CDN                           |
-| Password     | jBCrypt                                        |
-| JWT          | JJWT 0.12.6                                    |
-| MCP Server   | Spring AI MCP Server (WebMVC, Streamable HTTP) |
+| Layer        | Technology                                                |
+| ------------ | --------------------------------------------------------- |
+| Language     | Java 21                                                   |
+| Framework    | Spring Boot 4.1.0                                         |
+| Web / MVC    | Spring Web MVC, Thymeleaf                                 |
+| Security     | Spring Security (JWT for API, session for Web)            |
+| Database     | MySQL                                                     |
+| Persistence  | Spring JDBC (`JdbcTemplate`) — raw SQL, no ORM            |
+| Migrations   | Flyway 11                                                 |
+| Mail         | Spring Mail (`JavaMailSender`)                            |
+| Build Tool   | Maven (`./mvnw`) with Spotless (Palantir Java Format)     |
+| Frontend CSS | Tailwind CSS via CDN                                      |
+| Password     | jBCrypt                                                   |
+| JWT          | JJWT 0.12.6                                               |
+| MCP Server   | Spring AI MCP Server (WebMVC, Streamable HTTP)            |
 
 ---
 
@@ -39,34 +43,34 @@ A vocabulary and grammar management application built with **Spring Boot**. Lobo
 
 ```
 src/main/java/id/my/tudemaha/lobos/
-├── config/             # Security & application configuration
+├── config/             # Security & application configuration (SecurityConfig, OpenApiConfig)
 ├── controller/
-│   ├── api/            # REST controllers (@RestController, /api prefix)
-│   ├── web/            # MVC controllers (@Controller, Thymeleaf views)
+│   ├── api/            # REST controllers (@RestController: AuthController, ProfileController, CollectionController, GrammarController, McpTokenController, SyncController)
+│   ├── web/            # MVC controllers (@Controller: WebAuthController, WebProfileController, WebCollectionController, WebGrammarController, WebMcpTokenController)
 │   └── mcp/            # MCP tools (@McpTool components exposed over the MCP server)
 ├── dto/
 │   ├── request/        # Incoming request DTOs
-│   └── response/       # Outgoing response DTOs
+│   └── response/       # Outgoing response DTOs (incl. HttpResponse envelope)
 ├── exception/          # Custom exceptions & GlobalExceptionHandler
 ├── mapper/             # Entity ↔ DTO mappers
-├── model/              # Domain models (User, Collection, Grammar, McpToken)
+├── model/              # Domain models (User, Collection, Grammar, McpToken, RefreshToken, EmailVerificationToken)
 ├── repository/         # Data access via JdbcTemplate
 ├── security/           # JWT/MCP filters, remember-me (JdbcPersistentTokenRepository, AppUserDetailsService) & token services
-├── service/            # Business logic
-└── utils/              # Pagination, PasswordHasher
+├── service/            # Business logic (UserService, CollectionService, GrammarService, McpTokenService, RefreshTokenService, EmailService, SyncService)
+└── utils/              # Pagination, Hasher, SyncCursor, TokenUtil
 
 src/main/resources/
-├── application.properties   # App configuration (DB, JWT secret, MCP server)
-├── schema.sql               # MySQL DDL
+├── application.properties   # App configuration (DB, JWT, Flyway, Mail, MCP)
+├── db/migration/            # Flyway SQL migrations (V1__baseline.sql .. V4__sync_support.sql)
 ├── static/
 │   ├── css/main.css         # Global styles
 │   ├── fonts/               # Custom fonts (vimala.ttf)
-│   ├── js/                  # Vanilla JS per-page scripts (incl. mcp.js)
+│   ├── js/                  # Vanilla JS per-page scripts (incl. mcp.js, profile.js)
 │   └── index.html           # Static landing page
 └── templates/               # Thymeleaf HTML templates
     ├── layout.html           # Shared base layout
-    ├── auth/                 # login.html, register.html, profile.html
-    ├── mcp/                   # index.html (MCP token management)
+    ├── auth/                 # login, register, profile, verify-email, forgot-password, reset-password
+    ├── mcp/                  # index.html (MCP token management)
     ├── collections/          # index.html
     └── grammars/             # index.html, detail.html
 ```
@@ -75,15 +79,19 @@ src/main/resources/
 
 ## Database Schema
 
+Database migrations are managed automatically by **Flyway**:
+
 ```sql
-users              (id, first_name, last_name, email, password, created_at, updated_at)
-persistent_logins  (series, user_id, token, last_used)
-mcp_tokens         (id, user_id → users.id, name, token, created_at, last_used_at)
-collections        (id, name, color, user_id → users.id, created_at, updated_at)
-grammars           (id, word, meaning, example, is_starred, collection_id → collections.id, created_at, updated_at)
+users                     (id, first_name, last_name, email, password, is_verified, created_at, updated_at)
+persistent_logins         (series, user_id, token, last_used)
+refresh_tokens            (id, user_id → users.id, token_hash, expires_at, created_at, revoked_at)
+email_verification_tokens (id, user_id → users.id, token_hash, type, pending_email, expires_at, created_at, used_at)
+mcp_tokens                (id, user_id → users.id, name, token, created_at, last_used_at)
+collections               (id, name, color, user_id → users.id, created_at, updated_at, deleted_at, version)
+grammars                  (id, word, meaning, example, is_starred, collection_id → collections.id, created_at, updated_at, deleted_at, version)
 ```
 
-Primary keys are `VARCHAR(36)` UUIDs, auto-generated by MySQL (`DEFAULT (UUID())`). `persistent_logins` is keyed by `series` instead (remember-me tokens), with `user_id` referencing the immutable `users.id`.
+Primary keys are `VARCHAR(36)` UUIDs, supporting both client-generated UUIDs on creation and MySQL default generation (`DEFAULT (UUID())`). Collections and grammars use soft deletion (`deleted_at`) and versioning for offline delta synchronization.
 
 ---
 
@@ -102,34 +110,33 @@ git clone <repository-url>
 cd lobos
 ```
 
-### 2. Set up the database
+### 2. Configure the application
 
-Create a MySQL database and run the schema:
-
-```bash
-mysql -u <user> -p <database_name> < src/main/resources/schema.sql
-```
-
-### 3. Configure the application
-
-Edit `src/main/resources/application.properties`:
+Edit `src/main/resources/application.properties` (or set environment variables):
 
 ```properties
-spring.ai.mcp.server.name=lobos-mcp-server
-spring.ai.mcp.server.version=1.0.0
-spring.ai.mcp.server.protocol=streamable
-
 spring.datasource.url=jdbc:mysql://<host>:<port>/<database>
 spring.datasource.username=<db_user>
 spring.datasource.password=<db_password>
 
 jwt.secret=<your_strong_secret_key>
+jwt.access-ttl=15m
+jwt.refresh-ttl=30d
+
 app.remember-me.key=<your_strong_secret_key>
+app.base-url=http://localhost:8080
+
+spring.mail.host=<smtp_host>
+spring.mail.port=587
+spring.mail.username=<email_user>
+spring.mail.password=<email_password>
 ```
 
 > ⚠️ **Never commit `application.properties` with real credentials to version control.**
 
-### 4. Run the application
+### 3. Run the application
+
+Database migrations execute automatically via Flyway on startup:
 
 ```bash
 ./mvnw spring-boot:run
@@ -193,39 +200,85 @@ docker run -d \
 
 ### Web Interface
 
-| Route            | Description                        |
-| ---------------- | ---------------------------------- |
-| `/`              | Landing page                       |
-| `/login`         | Log in to your account             |
-| `/register`      | Create a new account               |
-| `/profile`       | View and update your profile       |
-| `/collections`   | Manage your vocabulary collections |
-| `/grammars`      | Browse and manage grammar notes    |
-| `/grammars/{id}` | View grammar note detail           |
-| `/tokens`        | Manage MCP tokens                  |
+| Route               | Description                                    |
+| ------------------- | ---------------------------------------------- |
+| `/`                 | Landing page                                   |
+| `/login`            | Log in to your account                         |
+| `/register`         | Create a new account                           |
+| `/verify-email`     | Verify account email address via token link    |
+| `/forgot-password`  | Request password reset email                   |
+| `/reset-password`   | Reset password with emailed token              |
+| `/profile`          | View user profile                              |
+| `/profile/update`   | Update profile name details                    |
+| `/profile/email`    | Request email address update with verification |
+| `/profile/password` | Update account password                        |
+| `/collections`      | Manage your vocabulary collections             |
+| `/grammars`         | Browse and manage grammar notes                |
+| `/grammars/{id}`    | View grammar note detail                       |
+| `/tokens`           | Manage MCP tokens                              |
 
 ### REST API
 
-All API endpoints are prefixed with `/api` and require a `Bearer <token>` JWT header (except auth endpoints).
+All API endpoints are prefixed with `/api` and return standardized `HttpResponse<T>` JSON envelopes. Bearer JWT authentication is required for all endpoints except public auth routes.
 
-| Method | Endpoint                                               | Description                        |
-| ------ | ------------------------------------------------------ | ---------------------------------- |
-| POST   | `/api/auth/register`                                   | Register a new user                |
-| POST   | `/api/auth/login`                                      | Log in and receive a JWT           |
-| GET    | `/api/collections`                                     | List user's collections            |
-| POST   | `/api/collections`                                     | Create a new collection            |
-| PUT    | `/api/collections/{id}`                                | Update a collection                |
-| DELETE | `/api/collections/{id}`                                | Delete a collection                |
-| GET    | `/api/collections/{collectionId}/grammars`             | List grammar notes in a collection |
-| POST   | `/api/collections/{collectionId}/grammars`             | Create a grammar note              |
-| GET    | `/api/collections/{collectionId}/grammars/{grammarId}` | Get a single grammar note          |
-| PUT    | `/api/collections/{collectionId}/grammars/{grammarId}` | Update a grammar note              |
-| PATCH  | `/api/collections/{collectionId}/grammars/{grammarId}` | Toggle star on a grammar note      |
-| DELETE | `/api/collections/{collectionId}/grammars/{grammarId}` | Delete a grammar note              |
-| POST   | `/api/tokens`                                          | Generate a new MCP token           |
-| GET    | `/api/tokens`                                          | List user's MCP tokens             |
-| PATCH  | `/api/tokens/{id}`                                     | Rename an MCP token                |
-| DELETE | `/api/tokens/{id}`                                     | Revoke an MCP token                |
+#### Authentication (`/api/auth`)
+
+| Method | Endpoint                         | Description                                        |
+| ------ | -------------------------------- | -------------------------------------------------- |
+| POST   | `/api/auth/register`             | Register a new account                             |
+| POST   | `/api/auth/login`                | Log in; returns JWT access token and refresh token |
+| POST   | `/api/auth/refresh`              | Rotate refresh token and issue new access token    |
+| POST   | `/api/auth/logout`               | Revoke current refresh token                       |
+| POST   | `/api/auth/logout-all`           | Revoke all active refresh tokens for the user      |
+| POST   | `/api/auth/verify-email`         | Verify email address using verification token      |
+| POST   | `/api/auth/resend-verification`  | Resend email verification link                     |
+| POST   | `/api/auth/forgot-password`      | Request password reset email                       |
+| POST   | `/api/auth/reset-password`       | Reset account password using token                 |
+
+#### Profile (`/api/profile`)
+
+| Method | Endpoint                 | Description                                    |
+| ------ | ------------------------ | ---------------------------------------------- |
+| GET    | `/api/profile`           | Get current authenticated user profile         |
+| PUT    | `/api/profile`           | Update user profile names                      |
+| PATCH  | `/api/profile/email`     | Request email change (sends verification email)|
+| PATCH  | `/api/profile/password`  | Change account password                        |
+| DELETE | `/api/profile`           | Delete account and associated data             |
+
+#### Collections (`/api/collections`)
+
+| Method | Endpoint                  | Description                                            |
+| ------ | ------------------------- | ------------------------------------------------------ |
+| GET    | `/api/collections`        | List user collections (supports search and pagination) |
+| POST   | `/api/collections`        | Create collection (supports client-generated UUID)     |
+| PUT    | `/api/collections/{id}`   | Update collection name and color                       |
+| DELETE | `/api/collections/{id}`   | Soft delete collection                                 |
+
+#### Grammar Notes (`/api/collections/{collectionId}/grammars`)
+
+| Method | Endpoint                                               | Description                                       |
+| ------ | ------------------------------------------------------ | ------------------------------------------------- |
+| GET    | `/api/collections/{collectionId}/grammars`             | List grammar notes in a collection                |
+| POST   | `/api/collections/{collectionId}/grammars`             | Create grammar note (supports client UUID)        |
+| GET    | `/api/collections/{collectionId}/grammars/{grammarId}` | Get single grammar note detail                    |
+| PUT    | `/api/collections/{collectionId}/grammars/{grammarId}` | Update grammar note                               |
+| PATCH  | `/api/collections/{collectionId}/grammars/{grammarId}` | Set or toggle starred status                      |
+| DELETE | `/api/collections/{collectionId}/grammars/{grammarId}` | Soft delete grammar note                          |
+
+#### Synchronization (`/api/sync`)
+
+| Method | Endpoint    | Description                                                     |
+| ------ | ----------- | --------------------------------------------------------------- |
+| GET    | `/api/sync` | Delta sync changes feed (cursor-based pagination via timestamp) |
+
+#### MCP Tokens (`/api/tokens`)
+
+| Method | Endpoint            | Description              |
+| ------ | ------------------- | ------------------------ |
+| POST   | `/api/tokens`       | Generate a new MCP token |
+| GET    | `/api/tokens`       | List user's MCP tokens   |
+| PATCH  | `/api/tokens/{id}`  | Rename an MCP token      |
+| DELETE | `/api/tokens/{id}`  | Revoke an MCP token      |
 
 ### MCP Server
 
@@ -260,6 +313,12 @@ claude mcp add --transport http lobos http://localhost:8080/mcp -H "Authorizatio
 
 # Run tests
 ./mvnw test
+
+# Check code formatting (Spotless)
+./mvnw spotless:check
+
+# Apply code formatting (Spotless)
+./mvnw spotless:apply
 
 # Package as JAR
 ./mvnw clean package

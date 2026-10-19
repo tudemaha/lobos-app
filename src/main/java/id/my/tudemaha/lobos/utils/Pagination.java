@@ -4,9 +4,13 @@ import id.my.tudemaha.lobos.dto.request.PaginationRequest;
 
 public class Pagination {
     public static PaginationRequest buildPaginationRequest(PaginationRequest paginationRequest) {
-        if (paginationRequest.getPage() == null || paginationRequest.getPage() < 1) paginationRequest.setPage(1);
-        if (paginationRequest.getPerPage() == null || paginationRequest.getPerPage() < 10)
-            paginationRequest.setPerPage(10);
+        int page = (paginationRequest.getPage() == null || paginationRequest.getPage() < 1)
+                ? 1
+                : paginationRequest.getPage();
+        int perPage = paginationRequest.getPerPage() == null ? 10 : Math.clamp(paginationRequest.getPerPage(), 10, 100);
+
+        paginationRequest.setPage(page);
+        paginationRequest.setPerPage(perPage);
         return paginationRequest;
     }
 }
