@@ -2,8 +2,8 @@ package id.my.tudemaha.lobos.controller.api;
 
 import id.my.tudemaha.lobos.dto.request.CreateGrammar;
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
+import id.my.tudemaha.lobos.dto.request.StarGrammar;
 import id.my.tudemaha.lobos.dto.request.UpdateGrammar;
-import id.my.tudemaha.lobos.dto.response.GrammarData;
 import id.my.tudemaha.lobos.dto.response.GrammarDetail;
 import id.my.tudemaha.lobos.dto.response.GrammarList;
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
@@ -84,9 +84,10 @@ public class GrammarController {
     public ResponseEntity<HttpResponse<Void>> starGrammar(
             @PathVariable String collectionId,
             @PathVariable String grammarId,
+            @RequestBody StarGrammar starGrammar,
             @AuthenticationPrincipal User user
     ) {
-        grammarService.toggleStarred(grammarId, collectionId, user.getId());
+        grammarService.toggleStarred(grammarId, collectionId, user.getId(), starGrammar);
         return ResponseEntity.ok(HttpResponse.success("grammar star toggled successfully", null));
     }
 

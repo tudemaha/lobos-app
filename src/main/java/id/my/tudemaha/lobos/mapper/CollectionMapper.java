@@ -20,6 +20,7 @@ public class CollectionMapper {
         collectionData.setName(collection.getName());
         collectionData.setColor(collection.getColor());
         collectionData.setCreatedAt(collection.getCreatedAt());
+        collectionData.setUpdatedAt(collection.getUpdatedAt());
 
         return collectionData;
     }

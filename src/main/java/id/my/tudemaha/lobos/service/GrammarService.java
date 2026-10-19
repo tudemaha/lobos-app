@@ -2,6 +2,7 @@ package id.my.tudemaha.lobos.service;
 
 import id.my.tudemaha.lobos.dto.request.CreateGrammar;
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
+import id.my.tudemaha.lobos.dto.request.StarGrammar;
 import id.my.tudemaha.lobos.dto.request.UpdateGrammar;
 import id.my.tudemaha.lobos.dto.response.GrammarData;
 import id.my.tudemaha.lobos.dto.response.GrammarDetail;
@@ -128,6 +129,11 @@ public class GrammarService {
     public void toggleStarred(String grammarId, String collectionId, String userId) {
         Grammar grammar = checkGrammarAccess(grammarId, collectionId, userId);
         grammarRepository.toggleStarred(grammar.getId());
+    }
+
+    public void toggleStarred(String grammarId, String collectionId, String userId, StarGrammar starGrammar) {
+        Grammar grammar = checkGrammarAccess(grammarId, collectionId, userId);
+        grammarRepository.toggleStarred(grammar.getId(), starGrammar.isStarred());
     }
 
     public void delete(String grammarId, String collectionId, String userId) {

@@ -89,8 +89,8 @@ public class GrammarRepository {
         return jdbcTemplate.query(sql, grammarRowMapper, id).stream().findFirst();
     }
 
-    public void toggleStarred(String collectionId) {
-        Optional<Grammar> grammarOpt = findById(collectionId);
+    public void toggleStarred(String grammarId) {
+        Optional<Grammar> grammarOpt = findById(grammarId);
         if(grammarOpt.isEmpty()) {
             throw new NotFoundException();
         }
@@ -98,6 +98,17 @@ public class GrammarRepository {
         Grammar grammar = grammarOpt.get();
         String sql = "UPDATE grammars SET is_starred = ? WHERE id = ? AND deleted_at IS NULL";
         jdbcTemplate.update(sql, !grammar.isStarred(), grammar.getId());
+    }
+
+    public void toggleStarred(String grammarId, boolean isStarred) {
+        Optional<Grammar> grammarOpt = findById(grammarId);
+        if(grammarOpt.isEmpty()) {
+            throw new NotFoundException();
+        }
+
+        Grammar grammar = grammarOpt.get();
+        String sql = "UPDATE grammars SET is_starred = ? WHERE id = ? AND deleted_at IS NULL";
+        jdbcTemplate.update(sql, isStarred, grammar.getId());
     }
 
     public void update(Grammar grammar) {
@@ -125,5 +136,27 @@ public class GrammarRepository {
     public void deleteAllByCollectionId(String collectionId) {
         String sql = "UPDATE grammars SET deleted_at = CURRENT_TIMESTAMP(3) WHERE collection_id = ? AND deleted_at IS NULL";
         jdbcTemplate.update(sql, collectionId);
+    }
+
+    public List<Grammar> findSyncChanges(String userId, LocalDateTime since, String lastId, int limit) {
+        if (since == null || lastId == null) {
+            String sql = "SELECT * FROM grammars g " +
+                    "JOIN collections c ON g.collection_id = c.id " +
+                    "WHERE c.user_id = ? " +
+                    "ORDER BY g.updated_at, g.id LIMIT ?";
+            return jdbcTemplate.query(sql, grammarRowMapper, userId, limit);
+        }
+
+        String sql = "SELECT * FROM grammars g " +
+                "JOIN collections c ON g.collection_id = c.id " +
+                "WHERE c.user_id = ? " +
+                "AND (g.updated_at > ? OR (g.updated_at = ? AND g.id > ?))" +
+                "ORDER BY g.updated_at, g.id LIMIT ?";
+        return jdbcTemplate.query(sql, grammarRowMapper, userId, since, since, lastId, limit);
+    }
+
+    public int purgeOldTombstones(LocalDateTime threshold) {
+        String sql = "DELETE FROM grammars WHERE deleted_at IS NOT NULL AND deleted_at < ?";
+        return jdbcTemplate.update(sql, threshold);
     }
 }

@@ -10,4 +10,5 @@ public class CollectionData {
     private String name;
     private String color;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

@@ -93,4 +93,22 @@ public class CollectionRepository {
         String sql = "UPDATE collections SET deleted_at = CURRENT_TIMESTAMP(3) WHERE id = ? AND deleted_at IS NULL";
         jdbcTemplate.update(sql, id);
     }
+
+    public List<Collection> findSyncChanges(String userId, LocalDateTime since, String lastId, int limit) {
+        if (since == null || lastId == null) {
+            String sql = "SELECT * FROM collections WHERE user_id = ? " +
+                    "ORDER BY updated_at, id LIMIT ?";
+            return jdbcTemplate.query(sql, collectionRowMapper, userId, limit);
+        }
+
+        String sql = "SELECT * FROM collections WHERE user_id = ? " +
+                "AND (updated_at > ? OR (updated_at = ? AND id > ?)) " +
+                "ORDER BY updated_at, id LIMIT ?";
+        return jdbcTemplate.query(sql, collectionRowMapper, userId, since, since, lastId, limit);
+    }
+
+    public int purgeOldTombstones(LocalDateTime threshold) {
+        String sql = "DELETE FROM collections WHERE deleted_at IS NOT NULL and deleted_at < ?";
+        return jdbcTemplate.update(sql, threshold);
+    }
 }

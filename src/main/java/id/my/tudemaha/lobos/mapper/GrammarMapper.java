@@ -21,8 +21,10 @@ public class GrammarMapper {
         grammar.setId(entity.getId());
         grammar.setWord(entity.getWord());
         grammar.setMeaning(entity.getMeaning());
-        grammar.setCreatedAt(entity.getCreatedAt());
+        grammar.setExample(entity.getExample());
         grammar.setStarred(entity.isStarred());
+        grammar.setCreatedAt(entity.getCreatedAt());
+        grammar.setUpdatedAt(entity.getUpdatedAt());
 
         return grammar;
     }
