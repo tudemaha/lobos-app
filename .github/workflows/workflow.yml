@@ -34,6 +34,9 @@ jobs:
           DB_PASSWORD: dummy
           JWT_SECRET: dummyjwtsecretkey123456789012345678901234567890
           REMEMBER_ME_KEY: dummyremembermekey1234567890
+          MAIL_HOST: localhost
+          MAIL_USERNAME: dummy
+          MAIL_PASSWORD: dummy
         run: ./mvnw test
 
   build-and-push-image:
