@@ -1,15 +1,45 @@
-name: workflow.yml
+name: CI/CD
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - main
+      - dev
 
 jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Check code formatting (Spotless)
+        run: ./mvnw spotless:check
+
+      - name: Run tests
+        env:
+          DB_URL: jdbc:mysql://localhost:3306/lobos
+          DB_USERNAME: dummy
+          DB_PASSWORD: dummy
+          JWT_SECRET: dummyjwtsecretkey123456789012345678901234567890
+          REMEMBER_ME_KEY: dummyremembermekey1234567890
+        run: ./mvnw test
+
   build-and-push-image:
+    name: Build & Push Docker Image
+    needs: lint-and-test
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
 
     permissions:
@@ -33,13 +63,23 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
 
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ secrets.USERNAME }}/lobos
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable=true
+
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          tags: ghcr.io/${{ secrets.USERNAME }}/lobos:latest
-          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
