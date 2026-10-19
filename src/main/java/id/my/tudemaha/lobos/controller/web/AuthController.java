@@ -1,5 +1,6 @@
 package id.my.tudemaha.lobos.controller.web;
 
+import id.my.tudemaha.lobos.dto.request.ResetPassword;
 import id.my.tudemaha.lobos.dto.request.UpdateEmail;
 import id.my.tudemaha.lobos.dto.request.UpdatePassword;
 import id.my.tudemaha.lobos.dto.request.UserLogin;
@@ -8,6 +9,7 @@ import id.my.tudemaha.lobos.dto.request.UserUpdate;
 import id.my.tudemaha.lobos.exception.DuplicateEmailException;
 import id.my.tudemaha.lobos.exception.EmailNotVerifiedException;
 import id.my.tudemaha.lobos.exception.ForbiddenAccessException;
+import id.my.tudemaha.lobos.exception.InvalidTokenException;
 import id.my.tudemaha.lobos.exception.LoginException;
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.service.UserService;
@@ -149,6 +151,73 @@ public class AuthController {
             userService.resendEmailVerification(email);
         }
         return "redirect:/login?resent";
+    }
+
+    @GetMapping("/forgot-password")
+    public String forgotPasswordPage(@AuthenticationPrincipal User user) {
+        if (user != null) {
+            return "redirect:/collections";
+        }
+        return "auth/forgot-password";
+    }
+
+    @PostMapping("/auth/forgot-password")
+    public String forgotPasswordWeb(@RequestParam("email") String email) {
+        if (email != null && !email.isBlank()) {
+            userService.forgotPassword(email);
+        }
+        return "redirect:/login?forgot";
+    }
+
+    @GetMapping("/reset-password")
+    public String resetPasswordPage(
+            @RequestParam(value = "t", required = false) String t,
+            @AuthenticationPrincipal User user,
+            Model model
+    ) {
+        if (user != null) {
+            return "redirect:/collections";
+        }
+
+        ResetPassword resetPassword = new ResetPassword();
+        resetPassword.setToken(t);
+        model.addAttribute("resetPassword", resetPassword);
+
+        try {
+            userService.validateResetToken(t);
+            model.addAttribute("tokenValid", true);
+        } catch (InvalidTokenException e) {
+            model.addAttribute("tokenValid", false);
+            model.addAttribute("errorMessage", "The password reset link is invalid, has expired, or has already been used.");
+        }
+
+        return "auth/reset-password";
+    }
+
+    @PostMapping("/auth/reset-password")
+    public String resetPasswordWeb(
+            @Valid @ModelAttribute("resetPassword") ResetPassword resetPassword,
+            BindingResult bindingResult,
+            Model model
+    ) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("tokenValid", true);
+            return "auth/reset-password";
+        }
+
+        try {
+            userService.resetPassword(resetPassword);
+        } catch (IllegalArgumentException e) {
+            bindingResult.addError(new FieldError("resetPassword", "confirmPassword", e.getMessage()));
+            model.addAttribute("tokenValid", true);
+            return "auth/reset-password";
+        } catch (InvalidTokenException e) {
+            model.addAttribute("tokenValid", false);
+            model.addAttribute("errorMessage", "The password reset link is invalid, has expired, or has already been used.");
+            return "auth/reset-password";
+        }
+
+        return "redirect:/login?reset";
     }
 
     @PostMapping("/auth/logout")

@@ -50,6 +50,16 @@
             Registration successful! We've sent a confirmation email. Please check your inbox and verify your address.
         </div>
 
+        <!-- Alert for forgot password email sent -->
+        <div th:if="${param.forgot}" class="mb-4 bg-blue-50 border border-blue-200 rounded-md px-4 py-3 text-sm text-blue-700">
+            If an account exists for that email, a password reset link has been sent. Please check your inbox.
+        </div>
+
+        <!-- Alert for password reset success -->
+        <div th:if="${param.reset}" class="mb-4 bg-green-50 border border-green-200 rounded-md px-4 py-3 text-sm text-green-700">
+            Your password has been reset successfully. Please sign in with your new password.
+        </div>
+
         <!-- Alert for account deletion -->
         <div th:if="${param.deleted}" class="mb-4 bg-green-50 border border-green-200 rounded-md px-4 py-3 text-sm text-green-600">
             Your account has been deleted.
@@ -72,7 +82,10 @@
 
             <!-- Password -->
             <div>
-                <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <div class="flex items-center justify-between mb-1">
+                    <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <a th:href="@{/forgot-password}" class="text-xs pastel-blue font-medium hover:underline">Forgot password?</a>
+                </div>
                 <div class="relative">
                     <input id="login-password"
                            type="password"

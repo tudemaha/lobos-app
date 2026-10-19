@@ -110,8 +110,8 @@ public class SecurityConfig {
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/register", "/login", "/error", "/verify-email").permitAll()
-                        .requestMatchers("/auth/register", "/auth/login", "/auth/logout", "/auth/resend-verification").permitAll()
+                        .requestMatchers("/", "/register", "/login", "/error", "/verify-email", "/forgot-password", "/reset-password").permitAll()
+                        .requestMatchers("/auth/register", "/auth/login", "/auth/logout", "/auth/resend-verification", "/auth/forgot-password", "/auth/reset-password").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/webjars/**", "/docs/**", "/manifest.json").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
                         .anyRequest().authenticated()

@@ -161,13 +161,12 @@ public class UserService {
         }
     }
 
-    @Transactional
-    public void resetPassword(ResetPassword resetPassword) {
-        if (!resetPassword.getPassword().equals(resetPassword.getConfirmPassword())) {
-            throw new IllegalArgumentException("Password and password confirmation do not match");
+    public EmailVerificationToken validateResetToken(String rawToken) {
+        if (rawToken == null || rawToken.isBlank()) {
+            throw new InvalidTokenException("invalid or expired reset password token");
         }
 
-        String hashToken = Hasher.hashToken(resetPassword.getToken());
+        String hashToken = Hasher.hashToken(rawToken);
         EmailVerificationToken emailVerificationToken = emailVerificationTokenRepository.findByTokenHash(hashToken)
                 .orElseThrow(() -> new InvalidTokenException("invalid or expired reset password token"));
 
@@ -181,6 +180,17 @@ public class UserService {
         if (!"FORGET".equals(emailVerificationToken.getPurpose())) {
             throw new InvalidTokenException("invalid or expired reset password token");
         }
+
+        return emailVerificationToken;
+    }
+
+    @Transactional
+    public void resetPassword(ResetPassword resetPassword) {
+        if (!resetPassword.getPassword().equals(resetPassword.getConfirmPassword())) {
+            throw new IllegalArgumentException("Password and password confirmation do not match");
+        }
+
+        EmailVerificationToken emailVerificationToken = validateResetToken(resetPassword.getToken());
 
 
         User user = userRepository.findById(emailVerificationToken.getUserId())
