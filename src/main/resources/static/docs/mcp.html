@@ -96,11 +96,11 @@
 
             <div>
                 <h3 class="text-sm font-medium text-gray-900 mb-2">Other clients (raw HTTP)</h3>
-                <p class="text-sm text-gray-500 mb-2">Any MCP client that supports Streamable HTTP can connect with the endpoint and header below:</p>
-                <pre class="bg-gray-900 text-gray-100 text-xs font-mono rounded-md p-4 overflow-x-auto">curl -N https://lobos.tudemaha.my.id/mcp \
+                <p class="text-sm text-gray-500 mb-2">Any MCP client that supports Streamable HTTP can connect with the endpoint and header below. The server is stateless, so no session or handshake is needed:</p>
+                <pre class="bg-gray-900 text-gray-100 text-xs font-mono rounded-md p-4 overflow-x-auto">curl https://lobos.tudemaha.my.id/mcp \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -H "Accept: text/event-stream, application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'</pre>
             </div>
         </div>
