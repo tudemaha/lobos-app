@@ -92,6 +92,7 @@ public class WebAuthController {
     @PostMapping("/auth/login")
     public String login(
             @Valid @ModelAttribute("userLogin") UserLogin userLogin,
+            @RequestParam(value = "rememberMe", defaultValue = "false") boolean rememberMe,
             HttpServletRequest request,
             HttpServletResponse response) {
         User user;
@@ -105,7 +106,7 @@ public class WebAuthController {
 
         refreshAuthentication(user, request, response);
 
-        if (userLogin.isRememberMe()) {
+        if (rememberMe) {
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
             rememberMeServices.loginSuccess(request, response, authToken);
