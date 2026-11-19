@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 public class StarGrammar {
     @JsonProperty("isStarred")
-    private boolean isStarred;
+    private boolean starred;
 }

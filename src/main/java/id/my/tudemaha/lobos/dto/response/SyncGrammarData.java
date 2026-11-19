@@ -17,7 +17,7 @@ public class SyncGrammarData {
     private String example;
 
     @JsonProperty("isStarred")
-    private boolean isStarred;
+    private boolean starred;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

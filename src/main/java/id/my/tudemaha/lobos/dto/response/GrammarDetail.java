@@ -11,5 +11,5 @@ public class GrammarDetail {
     private String example;
 
     @JsonProperty("isStarred")
-    private boolean isStarred;
+    private boolean starred;
 }
