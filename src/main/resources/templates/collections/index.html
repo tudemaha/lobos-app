@@ -6,7 +6,10 @@
 
 <title>Collections — Lobos</title>
 
-<th:block th:fragment="head-extra"></th:block>
+<th:block th:fragment="head-extra">
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
+</th:block>
 
 <th:block th:fragment="main-content">
 <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
@@ -14,11 +17,16 @@
     <!-- Page header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-            <h1 class="text-2xl font-semibold text-gray-900">My Collections</h1>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-semibold text-gray-900">My Collections</h1>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
+                      th:text="${activeCount} + ' / ' + ${maxQuota} + ' collections used'">0 / 3 collections used</span>
+            </div>
             <p class="text-sm text-gray-500 mt-0.5">Organize your grammar entries into themed collections</p>
         </div>
         <button type="button"
                 id="btn-new-collection"
+                th:attr="data-quota-reached=${quotaReached}"
                 onclick="openCreateModal()"
                 class="btn-primary whitespace-nowrap self-start sm:self-auto">
             + New Collection
@@ -228,6 +236,39 @@
                 <button type="submit" id="btn-edit-collection-submit" class="btn-primary">Save Changes</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- ── QUOTA REACHED MODAL ── -->
+<div id="modal-quota"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">Collection Limit Reached</h2>
+        <p class="text-sm text-gray-600 mb-5">
+            Each account can create up to <span class="font-medium text-gray-900" th:text="${maxQuota}">3</span> active collections.
+            Delete an existing collection to free up a slot, or let the developer know you'd like a higher limit!
+        </p>
+
+        <div id="quota-notify-section" th:classappend="${hasNotifiedDeveloper} ? ' hidden' : ''">
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeQuotaModal()" class="btn-outline">Close</button>
+                <button type="button"
+                        id="btn-notify-developer"
+                        onclick="notifyDeveloperForQuota()"
+                        class="btn-primary">
+                    Notify Developer
+                </button>
+            </div>
+        </div>
+
+        <div id="quota-notified-msg" th:classappend="${hasNotifiedDeveloper} ? '' : ' hidden'">
+            <div class="mb-4 bg-blue-50 border border-blue-200 rounded-md px-4 py-3 text-sm text-blue-700">
+                Thank you! We've recorded your interest and sent a confirmation to your email.
+            </div>
+            <div class="flex justify-end">
+                <button type="button" onclick="closeQuotaModal()" class="btn-outline">Close</button>
+            </div>
+        </div>
     </div>
 </div>
 

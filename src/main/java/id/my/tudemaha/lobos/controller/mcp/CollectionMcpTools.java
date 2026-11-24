@@ -3,6 +3,7 @@ package id.my.tudemaha.lobos.controller.mcp;
 import id.my.tudemaha.lobos.dto.request.CreateCollection;
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
 import id.my.tudemaha.lobos.dto.response.CollectionList;
+import id.my.tudemaha.lobos.exception.QuotaExceededException;
 import id.my.tudemaha.lobos.model.User;
 import id.my.tudemaha.lobos.service.CollectionService;
 import java.util.Objects;
@@ -50,7 +51,11 @@ public class CollectionMcpTools {
         CreateCollection createCollection = new CreateCollection();
         createCollection.setName(name);
         createCollection.setColor(color);
-        collectionService.createCollection(createCollection, currentUser().getId());
+        try {
+            collectionService.createCollection(createCollection, currentUser().getId());
+        } catch (QuotaExceededException e) {
+            return "Cannot create collection: " + e.getMessage();
+        }
 
         return "collection created successfully";
     }

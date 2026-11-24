@@ -71,6 +71,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(HttpResponse.error("FORBIDDEN", msg));
     }
 
+    @ExceptionHandler(QuotaExceededException.class)
+    public ResponseEntity<HttpResponse<Void>> handleQuotaExceededException(QuotaExceededException e) {
+        String msg = e.getMessage() != null ? e.getMessage() : "quota exceeded";
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(HttpResponse.error("QUOTA_EXCEEDED", msg));
+    }
+
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<HttpResponse<Void>> handleInvalidTokenException(InvalidTokenException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(HttpResponse.error("INVALID_TOKEN", e.getMessage()));

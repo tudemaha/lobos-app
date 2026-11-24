@@ -2,6 +2,7 @@ package id.my.tudemaha.lobos.controller.api;
 
 import id.my.tudemaha.lobos.dto.request.CreateCollection;
 import id.my.tudemaha.lobos.dto.request.PaginationRequest;
+import id.my.tudemaha.lobos.dto.request.QuotaInteractionRequest;
 import id.my.tudemaha.lobos.dto.response.CollectionData;
 import id.my.tudemaha.lobos.dto.response.CollectionList;
 import id.my.tudemaha.lobos.dto.response.HttpResponse;
@@ -56,6 +57,14 @@ public class CollectionController {
     public ResponseEntity<HttpResponse<Void>> deleteCollection(
             @PathVariable String id, @AuthenticationPrincipal User user) {
         collectionService.delete(id, user.getId());
+        return ResponseEntity.ok(HttpResponse.success());
+    }
+
+    @PostMapping("/quota-interaction")
+    @Operation(summary = "Record user interaction when collection quota is reached")
+    public ResponseEntity<HttpResponse<Void>> recordQuotaInteraction(
+            @Valid @RequestBody QuotaInteractionRequest request, @AuthenticationPrincipal User user) {
+        collectionService.recordQuotaInteraction(user, request.getAction());
         return ResponseEntity.ok(HttpResponse.success());
     }
 }
