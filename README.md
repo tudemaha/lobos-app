@@ -6,7 +6,7 @@ A vocabulary and grammar management application built with **Spring Boot**. Lobo
 
 ## Features
 
-- 📚 **Collections** — Group vocabulary entries into named, color-coded collections
+- 📚 **Collections** — Group vocabulary entries into named, color-coded collections (up to 3 active collections per account, with quota-interest interaction tracking)
 - 📝 **Grammar Notes** — Store words with their meanings, examples, and star/favorite them
 - 🔐 **Authentication & Sessions** — Register, log in, refresh token rotation, and multi-device session revocation
 - ✉️ **Email Verification & Password Reset** — Email verification on signup and email change, plus secure token-based password reset flows
@@ -61,7 +61,7 @@ src/main/java/id/my/tudemaha/lobos/
 
 src/main/resources/
 ├── application.properties   # App configuration (DB, JWT, Flyway, Mail, MCP)
-├── db/migration/            # Flyway SQL migrations (V1__baseline.sql .. V4__sync_support.sql)
+├── db/migration/            # Flyway SQL migrations (V1__baseline.sql .. V5__collection_quota_interactions.sql)
 ├── static/
 │   ├── css/main.css         # Global styles
 │   ├── fonts/               # Custom fonts (vimala.ttf)
@@ -72,7 +72,8 @@ src/main/resources/
     ├── auth/                 # login, register, profile, verify-email, forgot-password, reset-password
     ├── mcp/                  # index.html (MCP token management)
     ├── collections/          # index.html
-    └── grammars/             # index.html, detail.html
+    ├── grammars/             # index.html, detail.html
+    └── mail/                 # verification.html, quota-interest.html
 ```
 
 ---
@@ -82,13 +83,14 @@ src/main/resources/
 Database migrations are managed automatically by **Flyway**:
 
 ```sql
-users                     (id, first_name, last_name, email, password, is_verified, created_at, updated_at)
-persistent_logins         (series, user_id, token, last_used)
-refresh_tokens            (id, user_id → users.id, token_hash, expires_at, created_at, revoked_at)
-email_verification_tokens (id, user_id → users.id, token_hash, type, pending_email, expires_at, created_at, used_at)
-mcp_tokens                (id, user_id → users.id, name, token, created_at, last_used_at)
-collections               (id, name, color, user_id → users.id, created_at, updated_at, deleted_at, version)
-grammars                  (id, word, meaning, example, is_starred, collection_id → collections.id, created_at, updated_at, deleted_at, version)
+users                         (id, first_name, last_name, email, password, is_verified, created_at, updated_at)
+persistent_logins             (series, user_id, token, last_used)
+refresh_tokens                (id, user_id → users.id, token_hash, expires_at, created_at, revoked_at)
+email_verification_tokens     (id, user_id → users.id, token_hash, type, pending_email, expires_at, created_at, used_at)
+mcp_tokens                    (id, user_id → users.id, name, token, created_at, last_used_at)
+collections                   (id, name, color, user_id → users.id, created_at, updated_at, deleted_at, version)
+collection_quota_interactions (id, user_id → users.id, action, created_at)
+grammars                      (id, word, meaning, example, is_starred, collection_id → collections.id, created_at, updated_at, deleted_at, version)
 ```
 
 Primary keys are `VARCHAR(36)` UUIDs, supporting both client-generated UUIDs on creation and MySQL default generation (`DEFAULT (UUID())`). Collections and grammars use soft deletion (`deleted_at`) and versioning for offline delta synchronization.
@@ -112,27 +114,27 @@ cd lobos
 
 ### 2. Configure the application
 
-Edit `src/main/resources/application.properties` (or set environment variables):
+Copy `.env.example` to `.env` in the project root and fill in your local credentials (loaded automatically via `spring.config.import=optional:file:.env[.properties]` in [`application.properties`](src/main/resources/application.properties)):
 
-```properties
-spring.datasource.url=jdbc:mysql://<host>:<port>/<database>
-spring.datasource.username=<db_user>
-spring.datasource.password=<db_password>
-
-jwt.secret=<your_strong_secret_key>
-jwt.access-ttl=15m
-jwt.refresh-ttl=30d
-
-app.remember-me.key=<your_strong_secret_key>
-app.base-url=http://localhost:8080
-
-spring.mail.host=<smtp_host>
-spring.mail.port=587
-spring.mail.username=<email_user>
-spring.mail.password=<email_password>
+```bash
+cp .env.example .env
 ```
 
-> ⚠️ **Never commit `application.properties` with real credentials to version control.**
+```properties
+DB_URL=jdbc:mysql://<host>:<port>/<database>
+DB_USERNAME=<db_user>
+DB_PASSWORD=<db_password>
+
+JWT_SECRET=<your_strong_secret_key>
+REMEMBER_ME_KEY=<your_strong_secret_key>
+
+MAIL_HOST=<smtp_host>
+MAIL_PORT=587
+MAIL_USERNAME=<email_user>
+MAIL_PASSWORD=<email_password>
+```
+
+> ⚠️ **`.env` is git-ignored. Never commit real credentials into `.env.example` or `application.properties`.**
 
 ### 3. Run the application
 
@@ -247,12 +249,13 @@ All API endpoints are prefixed with `/api` and return standardized `HttpResponse
 
 #### Collections (`/api/collections`)
 
-| Method | Endpoint                  | Description                                            |
-| ------ | ------------------------- | ------------------------------------------------------ |
-| GET    | `/api/collections`        | List user collections (supports search and pagination) |
-| POST   | `/api/collections`        | Create collection (supports client-generated UUID)     |
-| PUT    | `/api/collections/{id}`   | Update collection name and color                       |
-| DELETE | `/api/collections/{id}`   | Soft delete collection                                 |
+| Method | Endpoint                            | Description                                            |
+| ------ | ----------------------------------- | ------------------------------------------------------ |
+| GET    | `/api/collections`                  | List user collections (supports search and pagination) |
+| POST   | `/api/collections`                  | Create collection (supports client-generated UUID)     |
+| PUT    | `/api/collections/{id}`             | Update collection name and color                       |
+| DELETE | `/api/collections/{id}`             | Soft delete collection                                 |
+| POST   | `/api/collections/quota-interaction`| Record user interaction when collection quota is reached |
 
 #### Grammar Notes (`/api/collections/{collectionId}/grammars`)
 

@@ -37,8 +37,8 @@ src/main/java/id/my/tudemaha/lobos/
 
 src/main/resources/
 ├── application.properties
-├── db/migration/       # Flyway SQL schema migrations (V1 through V4)
-├── templates/          # Thymeleaf templates (layout.html, auth/, collections/, grammars/, mcp/)
+├── db/migration/       # Flyway SQL migrations (V1 through V5)
+├── templates/          # Thymeleaf templates (layout.html, auth/, collections/, grammars/, mcp/, mail/)
 └── static/
     ├── index.html       # Public marketing/landing page (plain HTML, not Thymeleaf)
     ├── css/             # Shared stylesheets (main.css) + page-specific overrides (landing.css)
@@ -65,10 +65,12 @@ src/main/resources/
 ## Backend & Database Conventions
 
 ### 1. Database & Persistence (`JdbcTemplate` & Flyway)
-- Database schema migrations are managed via Flyway in `src/main/resources/db/migration/` (`V1__baseline.sql`, `V2__refresh_tokens.sql`, `V3__email_verification.sql`, `V4__sync_support.sql`).
+- Database schema migrations are managed via Flyway in `src/main/resources/db/migration/` (`V1__baseline.sql`, `V2__refresh_tokens.sql`, `V3__email_verification.sql`, `V4__sync_support.sql`, `V5__collection_quota_interactions.sql`).
 - Persistence relies on raw SQL executed via `JdbcTemplate`. Do not introduce ORM/JPA mappings unless requested.
 - Primary keys are 36-character UUID strings (`VARCHAR(36)`), supporting client-generated UUIDs on creation for offline sync, with fallback to MySQL auto-generated UUIDs.
 - Collections and grammars support soft deletion (`deleted_at IS NOT NULL`) with change tracking via monotonically incremented `version` numbers.
+- Users are limited to 3 active collections (`CollectionService.MAX_COLLECTION_QUOTA = 3`), with quota-reached interactions (`CLICK_ADD_COLLECTION`, `NOTIFY_DEVELOPER`) stored in `collection_quota_interactions`.
+- Local environment credentials live in a git-ignored root `.env` file (copied from `.env.example`), imported automatically via `spring.config.import=optional:file:.env[.properties]` in `application.properties`.
 
 ### 2. Architecture & Layer Responsibilities
 - **Controllers (Triple Architecture)**:
@@ -86,8 +88,8 @@ src/main/resources/
 - **DTOs**: Keep strict separation between incoming `request` DTOs (e.g. `CreateGrammar`, `UserLogin`, `UpdateProfile`) and outgoing `response` DTOs (e.g. `HttpResponse`, `UserProfile`, `GrammarDetail`).
 
 ### 3. Error Handling
-- Use specific domain exceptions (`NotFoundException`, `DuplicateEmailException`, `ForbiddenAccessException`, `LoginException`, `TokenException`).
-- REST exceptions are centrally intercepted and transformed into standardized JSON responses (`HttpResponse<T>` with machine-readable error codes such as `NOT_FOUND`, `DUPLICATE_RESOURCE`, `VALIDATION_ERROR`, `UNAUTHORIZED`, etc.) by `@RestControllerAdvice` in `GlobalExceptionHandler`.
+- Use specific domain exceptions (`NotFoundException`, `DuplicateEmailException`, `ForbiddenAccessException`, `LoginException`, `TokenException`, `QuotaExceededException`).
+- REST exceptions are centrally intercepted and transformed into standardized JSON responses (`HttpResponse<T>` with machine-readable error codes such as `NOT_FOUND`, `DUPLICATE_RESOURCE`, `VALIDATION_ERROR`, `UNAUTHORIZED`, `QUOTA_EXCEEDED`, etc.) by `@RestControllerAdvice` in `GlobalExceptionHandler`.
 - Web MVC exceptions are handled by rendering error pages or binding form validation errors to view models.
 
 ### 4. Security & Authentication
