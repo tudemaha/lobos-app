@@ -78,6 +78,18 @@ public class EmailService {
         sendHtmlEmail(to, subject.toString(), htmlContent);
     }
 
+    @Async
+    public void sendQuotaInterestEmail(String to, String firstName) {
+        String subject = "Thank you for your interest in more Lobos collections!";
+        Context context = new Context();
+        context.setVariable("title", subject);
+        context.setVariable("firstName", firstName);
+        context.setVariable("baseUrl", baseUrl);
+
+        String htmlContent = templateEngine.process("mail/quota-interest", context);
+        sendHtmlEmail(to, subject, htmlContent);
+    }
+
     private void sendHtmlEmail(String to, String subject, String htmlBody) {
         try {
             MimeMessage message = mailSender.createMimeMessage();

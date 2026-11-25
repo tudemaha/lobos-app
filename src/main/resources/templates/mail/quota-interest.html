@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Thank you for your interest</title>
+    <style>
+        body {
+            font-family: 'Garamond', Georgia, serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            padding: 24px;
+            margin: 0;
+        }
+        .container {
+            max-width: 520px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 32px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 24px;
+            letter-spacing: -0.5px;
+        }
+        h2 {
+            font-size: 20px;
+            color: #0f172a;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        p {
+            line-height: 1.6;
+            color: #475569;
+            margin-bottom: 16px;
+            font-size: 15px;
+        }
+        .btn-wrapper {
+            text-align: center;
+            margin: 32px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            background-color: #70A3C9;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .footer {
+            margin-top: 32px;
+            font-size: 13px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 16px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo">Lobos</div>
+    <h2>Thank you for your interest!</h2>
+    <p>Hi <span th:text="${firstName}">there</span>,</p>
+    <p>
+        Thank you for organizing your notes with Lobos and for letting us know that you would like to create more than 3 collections.
+    </p>
+    <p>
+        Your request has been recorded for the developer. We truly appreciate your feedback and will let you know when expanded collection quotas are available.
+    </p>
+
+    <div class="btn-wrapper">
+        <a th:href="${baseUrl} + '/collections'" class="btn">Back to My Collections</a>
+    </div>
+
+    <div class="footer">
+        You received this email because you clicked "Notify Developer" in Lobos.
+    </div>
+</div>
+</body>
+</html>

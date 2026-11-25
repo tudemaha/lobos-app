@@ -81,6 +81,12 @@ public class CollectionRepository {
         return jdbcTemplate.query(sql, collectionRowMapper, id).stream().findFirst();
     }
 
+    public int countActiveByUserId(String userId) {
+        String sql = "SELECT COUNT(*) FROM collections WHERE user_id = ? AND deleted_at IS NULL";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId);
+        return count != null ? count : 0;
+    }
+
     public void update(Collection collection) {
         String sql = "UPDATE collections SET name = ?, color = ? WHERE id = ? AND deleted_at IS NULL";
         jdbcTemplate.update(sql, collection.getName(), collection.getColor(), collection.getId());
